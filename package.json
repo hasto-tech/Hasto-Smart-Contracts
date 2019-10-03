@@ -1,0 +1,9 @@
+{
+  "name": "hasto-contracts",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "@openzeppelin/network": "^0.2.9"
+  }
+}
