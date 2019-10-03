@@ -1,8 +1,12 @@
 pragma solidity 0.5.11;
 
 import "./PublicKeyUtils.sol";
+import "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
+
 
 contract HastoStorage {
+
+    using SafeMath for uint;
 
     // Structs
 
@@ -33,6 +37,8 @@ contract HastoStorage {
     struct User {
         bytes secp256k1PublicKey;
         mapping(uint => FileAccessEncryptedKey) filesAccesses;
+        uint[] sharedFilesIds;
+        uint[] publishedFilesIds;
     }
 
     // Events
@@ -76,6 +82,8 @@ contract HastoStorage {
         owner = msg.sender;
     }
 
+    // State changing functions
+
     function setPublicKey(bytes memory _publicKey) public publicKeyHasNotBeenDeclaredAndProven() {
         require(PublicKeyUtils.isPublicKeyCorrespondingToAddress(msg.sender, _publicKey), "Public key does not correspond to the address");
         users[msg.sender].secp256k1PublicKey = _publicKey;
@@ -89,6 +97,7 @@ contract HastoStorage {
         file.publishmentTimestamp = block.timestamp;
         file.fileVersionCount = 0;
         files[filesCount] = file;
+        users[msg.sender].publishedFilesIds.push(filesCount);
         emit FilePublishment(_ipfsHash, msg.sender, filesCount);
         return filesCount++;
     }
@@ -117,6 +126,31 @@ contract HastoStorage {
             cipheredText: _cipheredText,
             mac: _mac
         });
+        users[_to].sharedFilesIds.push(_fileId);
         emit FileEncryptionKeyShared(_fileId, _to);
+    }
+
+    // Getters
+
+
+    // Informations regarding files published by specific user
+    function getPublishedFilesCount() public view returns(uint) {
+        return users[msg.sender].publishedFilesIds.length;
+    }
+
+    function getPublishedFileId(uint _localFileId) public view returns(uint) {
+        require(_localFileId < users[msg.sender].publishedFilesIds.length, "Invalid file local id");
+        return users[msg.sender].publishedFilesIds[_localFileId];
+    }
+
+
+    // Informations regarding files shared with specific user
+    function getSharedFilesCount() public view returns(uint) {
+        return users[msg.sender].sharedFilesIds.length;
+    }
+
+    function getSharedFileId(uint _localFileId) public view returns(uint) {
+        require(_localFileId < users[msg.sender].sharedFilesIds.length, "Invalid file local id");
+        return users[msg.sender].sharedFilesIds[_localFileId];
     }
 }

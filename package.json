@@ -4,6 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
-    "@openzeppelin/network": "^0.2.9"
+    "@openzeppelin/network": "^0.2.9",
+    "openzeppelin-solidity": "^2.3.0"
   }
 }
