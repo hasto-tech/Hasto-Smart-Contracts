@@ -153,4 +153,60 @@ contract HastoStorage {
         require(_localFileId < users[msg.sender].sharedFilesIds.length, "Invalid file local id");
         return users[msg.sender].sharedFilesIds[_localFileId];
     }
+
+    // File encryption object getters
+
+    function getFileEncryptionIv(uint _fileId) public view returns(bytes32) {
+        return users[msg.sender].filesAccesses[_fileId].iv;
+    }
+
+    function getFileEncryptionEphemeralPublicKey(uint _fileId) public view returns(bytes32[4] memory) {
+        return users[msg.sender].filesAccesses[_fileId].ephemeralPublicKey;
+    }
+
+    function getFileEncryptionCipheredText(uint _fileId) public view returns(bytes32[9] memory) {
+        return users[msg.sender].filesAccesses[_fileId].cipheredText;
+    }
+
+    function getFileEncryptionMac(uint _fileId) public view returns(bytes32[2] memory) {
+        return users[msg.sender].filesAccesses[_fileId].mac;
+    }
+
+    // File data object getters
+
+    function getFileIpfsHash(uint _fileId) public view returns(bytes32) {
+        return files[_fileId].ipfsHash;
+    }
+
+    function getFilePublisher(uint _fileId) public view returns(address) {
+        return files[_fileId].publishedBy;
+    }
+
+    function getFilePublishmentTimestamp(uint _fileId) public view returns(uint) {
+        return files[_fileId].publishmentTimestamp;
+    }
+
+    function getFileSymmetricalEncryptionKeyHash(uint _fileId) public view returns(bytes32) {
+        return files[_fileId].encryptionSymmetricalKeyHash;
+    }
+
+    function getFileVersion(uint _fileId) public view returns(uint) {
+        return files[_fileId].fileVersionCount;
+    }
+
+    function getFileUpdatesCount(uint _fileId) public view returns(uint) {
+        return files[_fileId].versionDeltas.length;
+    }
+
+    function getFileVersionDelta(uint _fileId, uint _updateId) public view returns(int) {
+        return files[_fileId].versionDeltas[_updateId];
+    }
+
+    function getFileVersionUpdater(uint _fileId, uint _updateId) public view returns(address) {
+        return files[_fileId].updatesBy[_updateId];
+    }
+
+    function isAllowedToUpdateFile(uint _fileId, address _updater) public view returns(bool) {
+        return files[_fileId].allowedToUpdate[_updater];
+    }
 }
