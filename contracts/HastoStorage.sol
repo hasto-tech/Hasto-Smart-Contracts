@@ -2,9 +2,11 @@ pragma solidity 0.5.11;
 
 import "./PublicKeyUtils.sol";
 import "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "../node_modules/@openzeppelin/contracts-ethereum-package/contracts/GSN/GSNRecipient.sol";
 
 
-contract HastoStorage {
+
+contract HastoStorage is GSNRecipient {
 
     using SafeMath for uint;
 
@@ -17,7 +19,7 @@ contract HastoStorage {
         bytes32 encryptionSymmetricalKeyHash;
 
         uint fileVersionCount;
-        int[] versionDeltas;
+        bytes32[] previousHashes;
         address[] updatesBy;
 
         mapping(address => bool) allowedToUpdate;
@@ -44,7 +46,7 @@ contract HastoStorage {
     // Events
 
     event FilePublishment(bytes32 ipfsHash, address indexed publishedBy, uint indexed fileId);
-    event FileUpdate(uint indexed fileId, address publishedBy, bytes32 newHash, int delta, uint fileVersion);
+    event FileUpdate(uint indexed fileId, address publishedBy, bytes32 newHash, uint fileVersion);
     event FileEncryptionKeyShared(uint fileId, address indexed to);
 
     address owner;
@@ -52,6 +54,7 @@ contract HastoStorage {
 
     mapping(address => User) users;
     mapping(uint => File) public files;
+    mapping(address => bool) approvedUsers;
 
     modifier isOwner() {
         require(msg.sender == owner, "This method is restricted just to the contract owner");
@@ -59,17 +62,17 @@ contract HastoStorage {
     }
 
     modifier publicKeyHasNotBeenDeclaredAndProven() {
-        require(users[msg.sender].secp256k1PublicKey.length == 0, "The public key has been already declared");
+        require(users[_msgSender()].secp256k1PublicKey.length == 0, "The public key has been already declared");
         _;
     }
 
     modifier fileExists(uint _fileId) {
-        require(files[_fileId].ipfsHash[0] != 0, "In order to update a file it needs to be published");
+        require(files[_fileId].ipfsHash[2] != 0, "In order to update a file it needs to be published");
         _;
     }
 
     modifier isFilePublisher(uint _fileId) {
-        require(files[_fileId].publishedBy == msg.sender, "This action is restricted to the file publisher");
+        require(files[_fileId].publishedBy == _msgSender(), "This action is restricted to the file publisher");
         _;
     }
 
@@ -85,31 +88,30 @@ contract HastoStorage {
     // State changing functions
 
     function setPublicKey(bytes memory _publicKey) public publicKeyHasNotBeenDeclaredAndProven() {
-        require(PublicKeyUtils.isPublicKeyCorrespondingToAddress(msg.sender, _publicKey), "Public key does not correspond to the address");
-        users[msg.sender].secp256k1PublicKey = _publicKey;
+        require(PublicKeyUtils.isPublicKeyCorrespondingToAddress(_msgSender(), _publicKey), "Public key does not correspond to the address");
+        users[_msgSender()].secp256k1PublicKey = _publicKey;
     }
 
     function publishFile(bytes32 _ipfsHash, bytes32 _encryptionKeyHash) public returns(uint) {
         File memory file;
         file.ipfsHash = _ipfsHash;
         file.encryptionSymmetricalKeyHash = _encryptionKeyHash;
-        file.publishedBy = msg.sender;
+        file.publishedBy = _msgSender();
         file.publishmentTimestamp = block.timestamp;
         file.fileVersionCount = 0;
         files[filesCount] = file;
-        users[msg.sender].publishedFilesIds.push(filesCount);
-        emit FilePublishment(_ipfsHash, msg.sender, filesCount);
+        users[_msgSender()].publishedFilesIds.push(filesCount);
+        emit FilePublishment(_ipfsHash, _msgSender(), filesCount);
         return filesCount++;
     }
 
     function updateFile(uint _fileId, bytes32 _ipfsHash) public fileExists(_fileId) {
-        require(msg.sender == files[_fileId].publishedBy || files[_fileId].allowedToUpdate[msg.sender], "Missing file update permission");
-        int delta = int(files[_fileId].ipfsHash) - int(_ipfsHash);
+        require(_msgSender() == files[_fileId].publishedBy || files[_fileId].allowedToUpdate[_msgSender()], "Missing file update permission");
+        files[_fileId].previousHashes.push(files[_fileId].ipfsHash);
         files[_fileId].ipfsHash = _ipfsHash;
         files[_fileId].fileVersionCount++;
-        files[_fileId].versionDeltas.push(delta);
-        files[_fileId].updatesBy.push(msg.sender);
-        emit FileUpdate(_fileId, msg.sender, _ipfsHash, delta, files[_fileId].fileVersionCount);
+        files[_fileId].updatesBy.push(_msgSender());
+        emit FileUpdate(_fileId, _msgSender(), _ipfsHash, files[_fileId].fileVersionCount);
     }
 
     function shareFileEncryptionKey(
@@ -132,44 +134,50 @@ contract HastoStorage {
 
     // Getters
 
+    // Address pubkey
+
+    function getPublicKey(address _user) public view returns(bytes memory) {
+        return users[_user].secp256k1PublicKey;
+    }
+
 
     // Informations regarding files published by specific user
     function getPublishedFilesCount() public view returns(uint) {
-        return users[msg.sender].publishedFilesIds.length;
+        return users[_msgSender()].publishedFilesIds.length;
     }
 
     function getPublishedFileId(uint _localFileId) public view returns(uint) {
-        require(_localFileId < users[msg.sender].publishedFilesIds.length, "Invalid file local id");
-        return users[msg.sender].publishedFilesIds[_localFileId];
+        require(_localFileId < users[_msgSender()].publishedFilesIds.length, "Invalid file local id");
+        return users[_msgSender()].publishedFilesIds[_localFileId];
     }
 
 
     // Informations regarding files shared with specific user
     function getSharedFilesCount() public view returns(uint) {
-        return users[msg.sender].sharedFilesIds.length;
+        return users[_msgSender()].sharedFilesIds.length;
     }
 
     function getSharedFileId(uint _localFileId) public view returns(uint) {
-        require(_localFileId < users[msg.sender].sharedFilesIds.length, "Invalid file local id");
-        return users[msg.sender].sharedFilesIds[_localFileId];
+        require(_localFileId < users[_msgSender()].sharedFilesIds.length, "Invalid file local id");
+        return users[_msgSender()].sharedFilesIds[_localFileId];
     }
 
     // File encryption object getters
 
     function getFileEncryptionIv(uint _fileId) public view returns(bytes32) {
-        return users[msg.sender].filesAccesses[_fileId].iv;
+        return users[_msgSender()].filesAccesses[_fileId].iv;
     }
 
     function getFileEncryptionEphemeralPublicKey(uint _fileId) public view returns(bytes32[4] memory) {
-        return users[msg.sender].filesAccesses[_fileId].ephemeralPublicKey;
+        return users[_msgSender()].filesAccesses[_fileId].ephemeralPublicKey;
     }
 
     function getFileEncryptionCipheredText(uint _fileId) public view returns(bytes32[9] memory) {
-        return users[msg.sender].filesAccesses[_fileId].cipheredText;
+        return users[_msgSender()].filesAccesses[_fileId].cipheredText;
     }
 
     function getFileEncryptionMac(uint _fileId) public view returns(bytes32[2] memory) {
-        return users[msg.sender].filesAccesses[_fileId].mac;
+        return users[_msgSender()].filesAccesses[_fileId].mac;
     }
 
     // File data object getters
@@ -195,11 +203,11 @@ contract HastoStorage {
     }
 
     function getFileUpdatesCount(uint _fileId) public view returns(uint) {
-        return files[_fileId].versionDeltas.length;
+        return files[_fileId].previousHashes.length;
     }
 
-    function getFileVersionDelta(uint _fileId, uint _updateId) public view returns(int) {
-        return files[_fileId].versionDeltas[_updateId];
+    function getFileVersionPreviousHash(uint _fileId, uint _updateId) public view returns(bytes32) {
+        return files[_fileId].previousHashes[_updateId];
     }
 
     function getFileVersionUpdater(uint _fileId, uint _updateId) public view returns(address) {
@@ -208,5 +216,25 @@ contract HastoStorage {
 
     function isAllowedToUpdateFile(uint _fileId, address _updater) public view returns(bool) {
         return files[_fileId].allowedToUpdate[_updater];
+    }
+
+    // Gas station network policy
+
+    function acceptRelayedCall(
+        address relay,
+        address from,
+        bytes calldata encodedFunction,
+        uint256 transactionFee,
+        uint256 gasPrice,
+        uint256 gasLimit,
+        uint256 nonce,
+        bytes calldata approvalData,
+        uint256 maxPossibleCharge
+    ) external view returns (uint256, bytes memory) {
+        address _caller = _msgSender();
+        if(approvedUsers[_caller] || _caller == owner) {
+            return _approveRelayedCall();
+        }
+        return _rejectRelayedCall(403);
     }
 }
