@@ -1,0 +1,606 @@
+[
+    {
+        "constant": true,
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "files",
+        "outputs": [
+            {
+                "internalType": "bytes32",
+                "name": "ipfsHash",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "address",
+                "name": "publishedBy",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "publishmentTimestamp",
+                "type": "uint256"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "encryptionSymmetricalKeyHash",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "uint256",
+                "name": "fileVersionCount",
+                "type": "uint256"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "bytes32",
+                "name": "ipfsHash",
+                "type": "bytes32"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "publishedBy",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "uint256",
+                "name": "fileId",
+                "type": "uint256"
+            }
+        ],
+        "name": "FilePublishment",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "uint256",
+                "name": "fileId",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "publishedBy",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "bytes32",
+                "name": "newHash",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "fileVersion",
+                "type": "uint256"
+            }
+        ],
+        "name": "FileUpdate",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "fileId",
+                "type": "uint256"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "to",
+                "type": "address"
+            }
+        ],
+        "name": "FileEncryptionKeyShared",
+        "type": "event"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "internalType": "bytes",
+                "name": "_publicKey",
+                "type": "bytes"
+            }
+        ],
+        "name": "setPublicKey",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "_ipfsHash",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "_encryptionKeyHash",
+                "type": "bytes32"
+            }
+        ],
+        "name": "publishFile",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_fileId",
+                "type": "uint256"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "_ipfsHash",
+                "type": "bytes32"
+            }
+        ],
+        "name": "updateFile",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_fileId",
+                "type": "uint256"
+            },
+            {
+                "internalType": "address",
+                "name": "_to",
+                "type": "address"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "_iv",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "bytes32[4]",
+                "name": "_ephemeralPublicKey",
+                "type": "bytes32[4]"
+            },
+            {
+                "internalType": "bytes32[9]",
+                "name": "_cipheredText",
+                "type": "bytes32[9]"
+            },
+            {
+                "internalType": "bytes32[2]",
+                "name": "_mac",
+                "type": "bytes32[2]"
+            }
+        ],
+        "name": "shareFileEncryptionKey",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_user",
+                "type": "address"
+            }
+        ],
+        "name": "getPublicKey",
+        "outputs": [
+            {
+                "internalType": "bytes",
+                "name": "",
+                "type": "bytes"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [],
+        "name": "getPublishedFilesCount",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_localFileId",
+                "type": "uint256"
+            }
+        ],
+        "name": "getPublishedFileId",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [],
+        "name": "getSharedFilesCount",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_localFileId",
+                "type": "uint256"
+            }
+        ],
+        "name": "getSharedFileId",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_fileId",
+                "type": "uint256"
+            }
+        ],
+        "name": "getFileEncryptionIv",
+        "outputs": [
+            {
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_fileId",
+                "type": "uint256"
+            }
+        ],
+        "name": "getFileEncryptionEphemeralPublicKey",
+        "outputs": [
+            {
+                "internalType": "bytes32[4]",
+                "name": "",
+                "type": "bytes32[4]"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_fileId",
+                "type": "uint256"
+            }
+        ],
+        "name": "getFileEncryptionCipheredText",
+        "outputs": [
+            {
+                "internalType": "bytes32[9]",
+                "name": "",
+                "type": "bytes32[9]"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_fileId",
+                "type": "uint256"
+            }
+        ],
+        "name": "getFileEncryptionMac",
+        "outputs": [
+            {
+                "internalType": "bytes32[2]",
+                "name": "",
+                "type": "bytes32[2]"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_fileId",
+                "type": "uint256"
+            }
+        ],
+        "name": "getFileIpfsHash",
+        "outputs": [
+            {
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_fileId",
+                "type": "uint256"
+            }
+        ],
+        "name": "getFilePublisher",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_fileId",
+                "type": "uint256"
+            }
+        ],
+        "name": "getFilePublishmentTimestamp",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_fileId",
+                "type": "uint256"
+            }
+        ],
+        "name": "getFileSymmetricalEncryptionKeyHash",
+        "outputs": [
+            {
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_fileId",
+                "type": "uint256"
+            }
+        ],
+        "name": "getFileVersion",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_fileId",
+                "type": "uint256"
+            }
+        ],
+        "name": "getFileUpdatesCount",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_fileId",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_updateId",
+                "type": "uint256"
+            }
+        ],
+        "name": "getFileVersionPreviousHash",
+        "outputs": [
+            {
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_fileId",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_updateId",
+                "type": "uint256"
+            }
+        ],
+        "name": "getFileVersionUpdater",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_fileId",
+                "type": "uint256"
+            },
+            {
+                "internalType": "address",
+                "name": "_updater",
+                "type": "address"
+            }
+        ],
+        "name": "isAllowedToUpdateFile",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    }
+]

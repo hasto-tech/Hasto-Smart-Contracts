@@ -1,7 +1,9 @@
-node_modules/
-build/
+src/
+test/
+tsconfig.json
+tslint.json
+.prettierrc
 .secret
 .privateKey
 .contractAddress
-.openzeppelin/
 typechain-build/
