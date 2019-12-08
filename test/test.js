@@ -49,4 +49,13 @@ describe('HastoSdk class tests', () => {
     const sharedFiles = await hastoSdk.getFilesSharedWithMe();
     expect(sharedFiles.length).to.equal(0);
   });
+
+  it('should set my public key', async () => {
+    await hastoSdk.setPublicKey();
+  });
+
+  it('should get my public key', async () => {
+    const publicKey = await hastoSdk.getMyPublicKey();
+    console.log(publicKey);
+  });
 });

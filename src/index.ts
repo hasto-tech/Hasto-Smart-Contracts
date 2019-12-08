@@ -4,7 +4,7 @@ import { SHA256, enc } from 'crypto-js';
 import * as crypto from 'crypto';
 
 import { Wallet, Contract, providers } from 'ethers';
-import { AbiCoder, BigNumber } from 'ethers/utils';
+import { AbiCoder, BigNumber, toUtf8Bytes } from 'ethers/utils';
 
 import ipfsHttpClient = require('ipfs-http-client');
 
@@ -136,5 +136,16 @@ export class HastoSdk {
     }
 
     throw new Error(`File update failed tx hash: ${txReceipt.transactionHash}`);
+  }
+
+  async getMyPublicKey(): Promise<string> {
+    const publicKey = await this.contractInstance.getPublicKey(this.wallet.address);
+    return publicKey.slice(2);
+  }
+
+  async setPublicKey() {
+    const publicKey = '0x' + EthCrypto.publicKeyByPrivateKey(this.privateKey);
+    const tx = await this.contractInstance.setPublicKey(publicKey);
+    await tx.wait();
   }
 }

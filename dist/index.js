@@ -121,5 +121,23 @@ class HastoSdk {
             throw new Error(`File update failed tx hash: ${txReceipt.transactionHash}`);
         });
     }
+    getMyPublicKey() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const publicKey = yield this.contractInstance.getPublicKey(this.wallet.address);
+            return publicKey.slice(2);
+        });
+    }
+    setPublicKey() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const publicKey = '0x' + eth_crypto_1.default.publicKeyByPrivateKey(this.privateKey);
+            try {
+                const tx = yield this.contractInstance.setPublicKey(publicKey);
+                yield tx.wait();
+            }
+            catch (err) {
+                console.log(err.message);
+            }
+        });
+    }
 }
 exports.HastoSdk = HastoSdk;
