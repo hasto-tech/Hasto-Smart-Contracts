@@ -28,11 +28,11 @@ contract HastoStorage {
         bytes32 iv;
 
         // Remember that the initial '04' is cutted the original length is 130 characters
-        bytes32[4] ephemeralPublicKey;
+        bytes ephemeralPublicKey;
 
-        bytes32[9] cipheredText;
+        bytes cipheredText;
 
-        bytes32[2] mac;
+        bytes mac;
     }
 
     struct User {
@@ -117,9 +117,9 @@ contract HastoStorage {
         uint _fileId,
         address _to,
         bytes32 _iv,
-        bytes32[4] memory _ephemeralPublicKey,
-        bytes32[9] memory _cipheredText,
-        bytes32[2] memory _mac
+        bytes memory _ephemeralPublicKey,
+        bytes memory _cipheredText,
+        bytes memory _mac
     ) public fileExists(_fileId) isFilePublisher(_fileId) correspondingPublicKeyExists(_to) {
         users[_to].filesAccesses[_fileId] = FileAccessEncryptedKey({
             iv: _iv,
@@ -167,15 +167,15 @@ contract HastoStorage {
         return users[msg.sender].filesAccesses[_fileId].iv;
     }
 
-    function getFileEncryptionEphemeralPublicKey(uint _fileId) public view returns(bytes32[4] memory) {
+    function getFileEncryptionEphemeralPublicKey(uint _fileId) public view returns(bytes memory) {
         return users[msg.sender].filesAccesses[_fileId].ephemeralPublicKey;
     }
 
-    function getFileEncryptionCipheredText(uint _fileId) public view returns(bytes32[9] memory) {
+    function getFileEncryptionCipheredText(uint _fileId) public view returns(bytes memory) {
         return users[msg.sender].filesAccesses[_fileId].cipheredText;
     }
 
-    function getFileEncryptionMac(uint _fileId) public view returns(bytes32[2] memory) {
+    function getFileEncryptionMac(uint _fileId) public view returns(bytes memory) {
         return users[msg.sender].filesAccesses[_fileId].mac;
     }
 

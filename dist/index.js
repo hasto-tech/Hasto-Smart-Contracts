@@ -108,7 +108,6 @@ class HastoSdk {
             const cipheredBytes = simpleCrypto.encrypt(bytesFile.toString('utf8'));
             const ipfsContent = yield this.ipfs.add(cipheredBytes);
             const ipfsHash = ipfsContent[0].hash;
-            // Ethereum transaction
             const bts32IpfsHash = yield ipfsHashesUtils_1.ipfsHashToBytes32(ipfsHash);
             const tx = yield this.contractInstance.updateFile(fileID, bts32IpfsHash);
             const txReceipt = yield tx.wait();
@@ -133,10 +132,27 @@ class HastoSdk {
             try {
                 const tx = yield this.contractInstance.setPublicKey(publicKey);
                 yield tx.wait();
+                return true;
             }
             catch (err) {
-                console.log(err.message);
+                if (err.message === 'VM Exception while processing transaction: revert The public key has been already declared') {
+                    return false;
+                }
+                throw new Error(err.message);
             }
+        });
+    }
+    shareFile(fileID, withAddress, encryptionKey) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let publicKey = yield this.contractInstance.getPublicKey(withAddress);
+            publicKey = publicKey.slice(2);
+            const encryptedKey = yield eth_crypto_1.default.encryptWithPublicKey(publicKey, encryptionKey);
+            const _iv = utils_1.toUtf8Bytes(encryptedKey.iv);
+            const _ephemeralPublicKey = utils_1.toUtf8Bytes(encryptedKey.ephemPublicKey);
+            const _cipheredText = utils_1.toUtf8Bytes(encryptedKey.ciphertext);
+            const _mac = utils_1.toUtf8Bytes(encryptedKey.mac);
+            const tx = yield this.contractInstance.shareFileEncryptionKey(fileID, withAddress, _iv, _ephemeralPublicKey, _cipheredText, _mac);
+            yield tx.wait();
         });
     }
 }

@@ -50,12 +50,20 @@ describe('HastoSdk class tests', () => {
     expect(sharedFiles.length).to.equal(0);
   });
 
-  it('should set my public key', async () => {
-    await hastoSdk.setPublicKey();
+  const hastoSdkV2 = new HastoSdk('http://localhost:5001', 'http://localhost:8545', contractAddress, privateKeys[1]);
+
+  it('should set a new public key', async () => {
+    await hastoSdkV2.setPublicKey();
   });
 
   it('should get my public key', async () => {
-    const publicKey = await hastoSdk.getMyPublicKey();
-    console.log(publicKey);
+    const publicKey = await hastoSdkV2.getMyPublicKey();
+    expect(publicKey.length).to.equal(128);
+  });
+
+  it('should share a file', async () => {
+    await hastoSdk.shareFile(fileID, hastoSdkV2.wallet.address, fileEncryptionKey);
+    const sharedFiles = await hastoSdkV2.getFilesSharedWithMe();
+    expect(sharedFiles.length > 0).to.equal(true);
   });
 });

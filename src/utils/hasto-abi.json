@@ -201,19 +201,19 @@
         "type": "bytes32"
       },
       {
-        "internalType": "bytes32[4]",
+        "internalType": "bytes",
         "name": "_ephemeralPublicKey",
-        "type": "bytes32[4]"
+        "type": "bytes"
       },
       {
-        "internalType": "bytes32[9]",
+        "internalType": "bytes",
         "name": "_cipheredText",
-        "type": "bytes32[9]"
+        "type": "bytes"
       },
       {
-        "internalType": "bytes32[2]",
+        "internalType": "bytes",
         "name": "_mac",
-        "type": "bytes32[2]"
+        "type": "bytes"
       }
     ],
     "name": "shareFileEncryptionKey",
@@ -348,9 +348,9 @@
     "name": "getFileEncryptionEphemeralPublicKey",
     "outputs": [
       {
-        "internalType": "bytes32[4]",
+        "internalType": "bytes",
         "name": "",
-        "type": "bytes32[4]"
+        "type": "bytes"
       }
     ],
     "payable": false,
@@ -369,9 +369,9 @@
     "name": "getFileEncryptionCipheredText",
     "outputs": [
       {
-        "internalType": "bytes32[9]",
+        "internalType": "bytes",
         "name": "",
-        "type": "bytes32[9]"
+        "type": "bytes"
       }
     ],
     "payable": false,
@@ -390,9 +390,9 @@
     "name": "getFileEncryptionMac",
     "outputs": [
       {
-        "internalType": "bytes32[2]",
+        "internalType": "bytes",
         "name": "",
-        "type": "bytes32[2]"
+        "type": "bytes"
       }
     ],
     "payable": false,

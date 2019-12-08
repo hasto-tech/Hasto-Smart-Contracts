@@ -13,5 +13,6 @@ export declare class HastoSdk {
     getFileEncryptionKeyHash(fileID: number): Promise<string>;
     updateFile(fileID: number, bytesFile: Buffer, encryptionKey: string, ignoreEncryptionKeysMismatch?: boolean): Promise<HastoFileUpdate>;
     getMyPublicKey(): Promise<string>;
-    setPublicKey(): Promise<void>;
+    setPublicKey(): Promise<boolean>;
+    shareFile(fileID: number, withAddress: string, encryptionKey: string): Promise<void>;
 }
