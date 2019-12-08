@@ -83,6 +83,19 @@ export class HastoSdk {
     return publishedFiles;
   }
 
+  async getFilesSharedWithMe(): Promise<number[]> {
+    const sharedFilesCount = await this.contractInstance.getSharedFilesCount();
+
+    let accessableFiles: number[] = [];
+
+    for (let i = 0; i < sharedFilesCount.toNumber(); i++) {
+      const globalFileID = await this.contractInstance.getSharedFileId(i);
+      accessableFiles.push(globalFileID.toNumber());
+    }
+
+    return accessableFiles;
+  }
+
   async getFileEncryptionKeyHash(fileID: number): Promise<string> {
     return await this.contractInstance.getFileSymmetricalEncryptionKeyHash(fileID);
   }

@@ -8,7 +8,7 @@ const fs = require('fs');
 const { utils } = require('ethers');
 
 describe('HastoSdk class tests', () => {
-  const privateKeys = fs.readFileSync('.privateKey', { encoding: 'utf8' }).split('\n');
+  const privateKeys = fs.readFileSync('.privateKeys', { encoding: 'utf8' }).split('\n');
   const contractAddress = fs.readFileSync('.contractAddress', { encoding: 'utf8' });
 
   const hastoSdk = new HastoSdk('http://localhost:5001', 'http://localhost:8545', contractAddress, privateKeys[0]);
@@ -38,5 +38,15 @@ describe('HastoSdk class tests', () => {
     const fileFromIpfs = await hastoSdk.getFile(fileID, fileEncryptionKey);
     const packageJson = fs.readFileSync('./package.json', { encoding: 'utf8' });
     expect(fileFromIpfs.fileBytes).to.equal(packageJson);
+  });
+
+  it('should return the ids of all published files', async () => {
+    const publishedFiles = await hastoSdk.getFilesPublishedByMe();
+    expect(publishedFiles.length > 0).to.equal(true);
+  });
+
+  it('should return all the files ids that have been shared with me', async () => {
+    const sharedFiles = await hastoSdk.getFilesSharedWithMe();
+    expect(sharedFiles.length).to.equal(0);
   });
 });

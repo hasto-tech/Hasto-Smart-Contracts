@@ -9,6 +9,7 @@ export declare class HastoSdk {
     uploadFile(bytesFile: Buffer): Promise<HastoIpfsUpload>;
     getFile(fileID: number, secretKey: string): Promise<HastoFile>;
     getFilesPublishedByMe(): Promise<number[]>;
+    getFilesSharedWithMe(): Promise<number[]>;
     getFileEncryptionKeyHash(fileID: number): Promise<string>;
     updateFile(fileID: number, bytesFile: Buffer, encryptionKey: string, ignoreEncryptionKeysMismatch?: boolean): Promise<HastoFileUpdate>;
 }

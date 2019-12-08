@@ -81,6 +81,17 @@ class HastoSdk {
             return publishedFiles;
         });
     }
+    getFilesSharedWithMe() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const sharedFilesCount = yield this.contractInstance.getSharedFilesCount();
+            let accessableFiles = [];
+            for (let i = 0; i < sharedFilesCount.toNumber(); i++) {
+                const globalFileID = yield this.contractInstance.getSharedFileId(i);
+                accessableFiles.push(globalFileID.toNumber());
+            }
+            return accessableFiles;
+        });
+    }
     getFileEncryptionKeyHash(fileID) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.contractInstance.getFileSymmetricalEncryptionKeyHash(fileID);
