@@ -4,6 +4,7 @@ import { SHA256, enc } from 'crypto-js';
 import * as crypto from 'crypto';
 
 import { Wallet, Contract, providers } from 'ethers';
+import { AbiCoder, BigNumber } from 'ethers/utils';
 
 import ipfsHttpClient = require('ipfs-http-client');
 
@@ -13,7 +14,6 @@ import { bytes32ToIpfsHash, ipfsHashToBytes32 } from './utils/ipfsHashesUtils';
 import { HastoStorage } from '../typechain-build/HastoStorage';
 
 import HastoABI from './utils/hasto-abi.json';
-import { AbiCoder } from 'ethers/utils';
 
 export class HastoSdk {
   private privateKey: string;
@@ -21,16 +21,11 @@ export class HastoSdk {
   private wallet: Wallet;
   private ipfs: any;
 
-  constructor(
-    private readonly ipfsProviderUrl: string,
-    private readonly ethereumProviderUrl: string,
-    contractAddress: string,
-    privateKey?: string,
-  ) {
+  constructor(ipfsProviderUrl: string, ethereumProviderUrl: string, contractAddress: string, privateKey?: string) {
     this.privateKey = privateKey || EthCrypto.createIdentity().privateKey;
     this.wallet = new Wallet(this.privateKey, new providers.JsonRpcProvider(ethereumProviderUrl));
     this.contractInstance = new Contract(contractAddress, HastoABI, this.wallet) as HastoStorage;
-    this.ipfs = ipfsHttpClient(ipfsHttpClient, '5001', { protocol: 'http' });
+    this.ipfs = ipfsHttpClient(ipfsProviderUrl, { protocol: 'http' });
   }
 
   async uploadFile(bytesFile: Buffer): Promise<HastoIpfsUpload> {
@@ -107,8 +102,6 @@ export class HastoSdk {
       );
     }
 
-    // TODO
-
     const simpleCrypto = new SimpleCrypto(encryptionKey);
     const cipheredBytes = simpleCrypto.encrypt(bytesFile.toString('utf8'));
     const ipfsContent = await this.ipfs.add(cipheredBytes);
@@ -123,10 +116,10 @@ export class HastoSdk {
     const txReceipt = await tx.wait();
 
     if (txReceipt.logs !== undefined) {
-      const abiDecoded = new AbiCoder().decode(['uint', 'address', 'bytes32', 'uint'], txReceipt.logs[0].data);
-      const [fileId, publishedBy, newHash, fileVersion] = abiDecoded;
-      return { fileId, publishedBy, newHash, fileVersion };
-      console.log(abiDecoded);
+      const abiDecoded = new AbiCoder().decode(['address', 'bytes32', 'uint256'], txReceipt.logs[0].data);
+      const fileId = parseInt(txReceipt.logs[0].topics[1], 16);
+      const [publishedBy, newHash, fileVersion]: [string, string, BigNumber] = abiDecoded;
+      return { fileId, publishedBy, newHash, fileVersion: fileVersion.toNumber() };
     }
 
     throw new Error(`File update failed tx hash: ${txReceipt.transactionHash}`);

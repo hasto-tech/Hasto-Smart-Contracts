@@ -1,4 +1,27 @@
 declare const _exports: ({
+    "inputs": never[];
+    "payable": boolean;
+    "stateMutability": string;
+    "type": string;
+    "anonymous"?: undefined;
+    "name"?: undefined;
+    "constant"?: undefined;
+    "outputs"?: undefined;
+} | {
+    "anonymous": boolean;
+    "inputs": {
+        "indexed": boolean;
+        "internalType": string;
+        "name": string;
+        "type": string;
+    }[];
+    "name": string;
+    "type": string;
+    "payable"?: undefined;
+    "stateMutability"?: undefined;
+    "constant"?: undefined;
+    "outputs"?: undefined;
+} | {
     "constant": boolean;
     "inputs": {
         "internalType": string;
@@ -15,28 +38,5 @@ declare const _exports: ({
     "stateMutability": string;
     "type": string;
     "anonymous"?: undefined;
-} | {
-    "inputs": never[];
-    "payable": boolean;
-    "stateMutability": string;
-    "type": string;
-    "constant"?: undefined;
-    "name"?: undefined;
-    "outputs"?: undefined;
-    "anonymous"?: undefined;
-} | {
-    "anonymous": boolean;
-    "inputs": {
-        "indexed": boolean;
-        "internalType": string;
-        "name": string;
-        "type": string;
-    }[];
-    "name": string;
-    "type": string;
-    "constant"?: undefined;
-    "outputs"?: undefined;
-    "payable"?: undefined;
-    "stateMutability"?: undefined;
 })[];
 export = _exports;

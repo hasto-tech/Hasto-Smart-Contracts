@@ -24,18 +24,16 @@ const simple_crypto_js_1 = __importDefault(require("simple-crypto-js"));
 const crypto_js_1 = require("crypto-js");
 const crypto = __importStar(require("crypto"));
 const ethers_1 = require("ethers");
+const utils_1 = require("ethers/utils");
 const ipfsHttpClient = require("ipfs-http-client");
 const ipfsHashesUtils_1 = require("./utils/ipfsHashesUtils");
 const hasto_abi_json_1 = __importDefault(require("./utils/hasto-abi.json"));
-const utils_1 = require("ethers/utils");
 class HastoSdk {
     constructor(ipfsProviderUrl, ethereumProviderUrl, contractAddress, privateKey) {
-        this.ipfsProviderUrl = ipfsProviderUrl;
-        this.ethereumProviderUrl = ethereumProviderUrl;
         this.privateKey = privateKey || eth_crypto_1.default.createIdentity().privateKey;
         this.wallet = new ethers_1.Wallet(this.privateKey, new ethers_1.providers.JsonRpcProvider(ethereumProviderUrl));
         this.contractInstance = new ethers_1.Contract(contractAddress, hasto_abi_json_1.default, this.wallet);
-        this.ipfs = ipfsHttpClient(ipfsHttpClient, '5001', { protocol: 'http' });
+        this.ipfs = ipfsHttpClient(ipfsProviderUrl, { protocol: 'http' });
     }
     uploadFile(bytesFile) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -95,7 +93,6 @@ class HastoSdk {
             if (fromEthereumFileEncryptionKeyHash !== fileEncryptionKeyHash && !ignoreEncryptionKeysMismatch) {
                 throw new Error('File encryption keys mismatch, to force the key change please set the param ignoreEncryptionKeysMismatch as true');
             }
-            // TODO
             const simpleCrypto = new simple_crypto_js_1.default(encryptionKey);
             const cipheredBytes = simpleCrypto.encrypt(bytesFile.toString('utf8'));
             const ipfsContent = yield this.ipfs.add(cipheredBytes);
@@ -105,10 +102,10 @@ class HastoSdk {
             const tx = yield this.contractInstance.updateFile(fileID, bts32IpfsHash);
             const txReceipt = yield tx.wait();
             if (txReceipt.logs !== undefined) {
-                const abiDecoded = new utils_1.AbiCoder().decode(['uint', 'address', 'bytes32', 'uint'], txReceipt.logs[0].data);
-                const [fileId, publishedBy, newHash, fileVersion] = abiDecoded;
-                return { fileId, publishedBy, newHash, fileVersion };
-                console.log(abiDecoded);
+                const abiDecoded = new utils_1.AbiCoder().decode(['address', 'bytes32', 'uint256'], txReceipt.logs[0].data);
+                const fileId = parseInt(txReceipt.logs[0].topics[1], 16);
+                const [publishedBy, newHash, fileVersion] = abiDecoded;
+                return { fileId, publishedBy, newHash, fileVersion: fileVersion.toNumber() };
             }
             throw new Error(`File update failed tx hash: ${txReceipt.transactionHash}`);
         });

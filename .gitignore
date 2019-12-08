@@ -1,7 +1,7 @@
 node_modules/
 build/
 .secret
-.privateKey
+.privateKeys
 .contractAddress
 .openzeppelin/
 typechain-build/

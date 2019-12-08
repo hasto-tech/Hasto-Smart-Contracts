@@ -1,8 +1,6 @@
 /// <reference types="node" />
 import { HastoIpfsUpload, HastoFile, HastoFileUpdate } from './types';
 export declare class HastoSdk {
-    private readonly ipfsProviderUrl;
-    private readonly ethereumProviderUrl;
     private privateKey;
     private contractInstance;
     private wallet;

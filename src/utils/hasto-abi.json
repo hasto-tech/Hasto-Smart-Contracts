@@ -1,50 +1,28 @@
 [
   {
-    "constant": true,
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "files",
-    "outputs": [
-      {
-        "internalType": "bytes32",
-        "name": "ipfsHash",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "address",
-        "name": "publishedBy",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "publishmentTimestamp",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "encryptionSymmetricalKeyHash",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "uint256",
-        "name": "fileVersionCount",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
     "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "fileId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      }
+    ],
+    "name": "FileEncryptionKeyShared",
+    "type": "event"
   },
   {
     "anonymous": false,
@@ -103,23 +81,45 @@
     "type": "event"
   },
   {
-    "anonymous": false,
+    "constant": true,
     "inputs": [
       {
-        "indexed": false,
         "internalType": "uint256",
-        "name": "fileId",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "files",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "ipfsHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "publishedBy",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "publishmentTimestamp",
         "type": "uint256"
       },
       {
-        "indexed": true,
-        "internalType": "address",
-        "name": "to",
-        "type": "address"
+        "internalType": "bytes32",
+        "name": "encryptionSymmetricalKeyHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint256",
+        "name": "fileVersionCount",
+        "type": "uint256"
       }
     ],
-    "name": "FileEncryptionKeyShared",
-    "type": "event"
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "constant": false,
