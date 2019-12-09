@@ -15,4 +15,5 @@ export declare class HastoSdk {
     getMyPublicKey(): Promise<string>;
     setPublicKey(): Promise<boolean>;
     shareFile(fileID: number, withAddress: string, encryptionKey: string): Promise<void>;
+    getSharedFile(fileID: number): Promise<HastoFile>;
 }

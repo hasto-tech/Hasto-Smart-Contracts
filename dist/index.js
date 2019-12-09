@@ -155,5 +155,30 @@ class HastoSdk {
             yield tx.wait();
         });
     }
+    getSharedFile(fileID) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const _ivPromise = this.contractInstance.getFileEncryptionIv(fileID);
+            const _ephemeralPublicKeyPromise = this.contractInstance.getFileEncryptionEphemeralPublicKey(fileID);
+            const _cipheredTextPromise = this.contractInstance.getFileEncryptionCipheredText(fileID);
+            const _macPromise = this.contractInstance.getFileEncryptionMac(fileID);
+            let [iv, ephemPublicKey, ciphertext, mac] = yield Promise.all([
+                _ivPromise,
+                _ephemeralPublicKeyPromise,
+                _cipheredTextPromise,
+                _macPromise,
+            ]);
+            iv = utils_1.toUtf8String(iv);
+            ephemPublicKey = utils_1.toUtf8String(ephemPublicKey);
+            ciphertext = utils_1.toUtf8String(ciphertext);
+            mac = utils_1.toUtf8String(mac);
+            const encryptionKey = yield eth_crypto_1.default.decryptWithPrivateKey(this.privateKey, {
+                iv,
+                ciphertext,
+                mac,
+                ephemPublicKey,
+            });
+            return yield this.getFile(fileID, encryptionKey);
+        });
+    }
 }
 exports.HastoSdk = HastoSdk;

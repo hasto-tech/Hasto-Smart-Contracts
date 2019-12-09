@@ -66,4 +66,10 @@ describe('HastoSdk class tests', () => {
     const sharedFiles = await hastoSdkV2.getFilesSharedWithMe();
     expect(sharedFiles.length > 0).to.equal(true);
   });
+
+  it('should get a shared file', async () => {
+    const updatedFile = fs.readFileSync('./package.json', { encoding: 'utf8' });
+    const fileFromIpfs = await hastoSdkV2.getSharedFile(fileID);
+    expect(fileFromIpfs.fileBytes).to.equal(updatedFile);
+  });
 });

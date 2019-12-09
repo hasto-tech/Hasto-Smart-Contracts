@@ -1,7 +1,7 @@
 {
   "name": "hasto-contracts",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/index.js",
   "license": "MIT",
   "dependencies": {
     "@types/bs58": "^4.0.1",

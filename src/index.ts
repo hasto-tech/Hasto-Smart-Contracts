@@ -4,7 +4,7 @@ import { SHA256, enc } from 'crypto-js';
 import * as crypto from 'crypto';
 
 import { Wallet, Contract, providers } from 'ethers';
-import { AbiCoder, BigNumber, toUtf8Bytes } from 'ethers/utils';
+import { AbiCoder, BigNumber, toUtf8Bytes, parseBytes32String, toUtf8String } from 'ethers/utils';
 
 import ipfsHttpClient = require('ipfs-http-client');
 
@@ -178,5 +178,33 @@ export class HastoSdk {
     );
 
     await tx.wait();
+  }
+
+  async getSharedFile(fileID: number): Promise<HastoFile> {
+    const _ivPromise = this.contractInstance.getFileEncryptionIv(fileID);
+    const _ephemeralPublicKeyPromise = this.contractInstance.getFileEncryptionEphemeralPublicKey(fileID);
+    const _cipheredTextPromise = this.contractInstance.getFileEncryptionCipheredText(fileID);
+    const _macPromise = this.contractInstance.getFileEncryptionMac(fileID);
+
+    let [iv, ephemPublicKey, ciphertext, mac] = await Promise.all([
+      _ivPromise,
+      _ephemeralPublicKeyPromise,
+      _cipheredTextPromise,
+      _macPromise,
+    ]);
+
+    iv = toUtf8String(iv);
+    ephemPublicKey = toUtf8String(ephemPublicKey);
+    ciphertext = toUtf8String(ciphertext);
+    mac = toUtf8String(mac);
+
+    const encryptionKey = await EthCrypto.decryptWithPrivateKey(this.privateKey, {
+      iv,
+      ciphertext,
+      mac,
+      ephemPublicKey,
+    });
+
+    return await this.getFile(fileID, encryptionKey);
   }
 }
