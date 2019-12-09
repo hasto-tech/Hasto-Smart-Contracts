@@ -181,22 +181,17 @@ export class HastoSdk {
   }
 
   async getSharedFile(fileID: number): Promise<HastoFile> {
-    // const _ivPromise = this.contractInstance.getFileEncryptionIv(fileID);
-    // const _ephemeralPublicKeyPromise = this.contractInstance.getFileEncryptionEphemeralPublicKey(fileID);
-    // const _cipheredTextPromise = this.contractInstance.getFileEncryptionCipheredText(fileID);
-    // const _macPromise = this.contractInstance.getFileEncryptionMac(fileID);
+    const _ivPromise = this.contractInstance.getFileEncryptionIv(fileID);
+    const _ephemeralPublicKeyPromise = this.contractInstance.getFileEncryptionEphemeralPublicKey(fileID);
+    const _cipheredTextPromise = this.contractInstance.getFileEncryptionCipheredText(fileID);
+    const _macPromise = this.contractInstance.getFileEncryptionMac(fileID);
 
-    // let [iv, ephemPublicKey, ciphertext, mac] = await Promise.all([
-    //   _ivPromise,
-    //   _ephemeralPublicKeyPromise,
-    //   _cipheredTextPromise,
-    //   _macPromise,
-    // ]);
-
-    let iv = await this.contractInstance.getFileEncryptionIv(fileID);
-    let ephemPublicKey = await this.contractInstance.getFileEncryptionEphemeralPublicKey(fileID);
-    let ciphertext = await this.contractInstance.getFileEncryptionCipheredText(fileID);
-    let mac = await this.contractInstance.getFileEncryptionMac(fileID);
+    let [iv, ephemPublicKey, ciphertext, mac] = await Promise.all([
+      _ivPromise,
+      _ephemeralPublicKeyPromise,
+      _cipheredTextPromise,
+      _macPromise,
+    ]);
 
     iv = toUtf8String(iv);
     ephemPublicKey = toUtf8String(ephemPublicKey);
