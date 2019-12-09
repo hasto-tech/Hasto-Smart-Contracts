@@ -17,15 +17,12 @@
     "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
     "test": "mocha --timeout 20000000 --reporter spec",
     "lint": "tslint -p tsconfig.json",
-    "build:typechain:truffle": "typechain --target=ethers './build/contracts/*.json' --outDir=./typechain-build",
-    "build:typechain:waffle": "typechain --target=ethers './build/*.json' --outDir=./typechain-build",
-    "build:contracts:truffle": "truffle build",
-    "build:contracts:waffle": "waffle .waffle.js; rm ./build/Combined-Json.json",
+    "build:typechain": "typechain --target=ethers './build/contracts/*.json' --outDir=./typechain-build",
+    "build:contracts": "truffle build",
     "deploy:contracts:development": "truffle migrate --network development --reset"
   },
   "devDependencies": {
     "chai": "^4.2.0",
-    "ethereum-waffle": "^2.1.1",
     "mocha": "^6.2.2",
     "openzeppelin-solidity": "^2.4.0",
     "prettier": "^1.18.2",
