@@ -181,22 +181,18 @@ export class HastoSdk {
   }
 
   async getSharedFile(fileID: number): Promise<HastoFile> {
-    const _ivPromise = this.contractInstance.getFileEncryptionIv(fileID);
-    const _ephemeralPublicKeyPromise = this.contractInstance.getFileEncryptionEphemeralPublicKey(fileID);
-    const _cipheredTextPromise = this.contractInstance.getFileEncryptionCipheredText(fileID);
-    const _macPromise = this.contractInstance.getFileEncryptionMac(fileID);
+    // TODO handle invalid fileID error
 
-    let [iv, ephemPublicKey, ciphertext, mac] = await Promise.all([
-      _ivPromise,
-      _ephemeralPublicKeyPromise,
-      _cipheredTextPromise,
-      _macPromise,
+    const [hexIv, hexEphemPublicKey, hexCiphertext, hexMac] = await Promise.all([
+      this.contractInstance.getFileEncryptionIv(fileID),
+      this.contractInstance.getFileEncryptionEphemeralPublicKey(fileID),
+      this.contractInstance.getFileEncryptionCipheredText(fileID),
+      this.contractInstance.getFileEncryptionMac(fileID),
     ]);
 
-    iv = toUtf8String(iv);
-    ephemPublicKey = toUtf8String(ephemPublicKey);
-    ciphertext = toUtf8String(ciphertext);
-    mac = toUtf8String(mac);
+    const [iv, ephemPublicKey, ciphertext, mac] = [hexIv, hexEphemPublicKey, hexCiphertext, hexMac].map(e => {
+      return toUtf8String(e);
+    });
 
     const encryptionKey = await EthCrypto.decryptWithPrivateKey(this.privateKey, {
       iv,

@@ -157,24 +157,17 @@ class HastoSdk {
     }
     getSharedFile(fileID) {
         return __awaiter(this, void 0, void 0, function* () {
-            // const _ivPromise = this.contractInstance.getFileEncryptionIv(fileID);
-            // const _ephemeralPublicKeyPromise = this.contractInstance.getFileEncryptionEphemeralPublicKey(fileID);
-            // const _cipheredTextPromise = this.contractInstance.getFileEncryptionCipheredText(fileID);
-            // const _macPromise = this.contractInstance.getFileEncryptionMac(fileID);
-            // let [iv, ephemPublicKey, ciphertext, mac] = await Promise.all([
-            //   _ivPromise,
-            //   _ephemeralPublicKeyPromise,
-            //   _cipheredTextPromise,
-            //   _macPromise,
-            // ]);
-            let iv = yield this.contractInstance.getFileEncryptionIv(fileID);
-            let ephemPublicKey = yield this.contractInstance.getFileEncryptionEphemeralPublicKey(fileID);
-            let ciphertext = yield this.contractInstance.getFileEncryptionCipheredText(fileID);
-            let mac = yield this.contractInstance.getFileEncryptionMac(fileID);
-            iv = utils_1.toUtf8String(iv);
-            ephemPublicKey = utils_1.toUtf8String(ephemPublicKey);
-            ciphertext = utils_1.toUtf8String(ciphertext);
-            mac = utils_1.toUtf8String(mac);
+            // TODO handle invalid fileID error
+            const [hexIv, hexEphemPublicKey, hexCiphertext, hexMac] = yield Promise.all([
+                this.contractInstance.getFileEncryptionIv(fileID),
+                this.contractInstance.getFileEncryptionEphemeralPublicKey(fileID),
+                this.contractInstance.getFileEncryptionCipheredText(fileID),
+                this.contractInstance.getFileEncryptionMac(fileID),
+            ]);
+            const [iv, ephemPublicKey, ciphertext, mac] = [hexIv, hexEphemPublicKey, hexCiphertext, hexMac].map(e => {
+                return utils_1.toUtf8String(e);
+            });
+            console.log(iv);
             const encryptionKey = yield eth_crypto_1.default.decryptWithPrivateKey(this.privateKey, {
                 iv,
                 ciphertext,
