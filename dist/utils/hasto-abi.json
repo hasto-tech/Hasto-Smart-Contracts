@@ -9,6 +9,25 @@
         "anonymous": false,
         "inputs": [
             {
+                "indexed": true,
+                "internalType": "uint256",
+                "name": "fileId",
+                "type": "uint256"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "to",
+                "type": "address"
+            }
+        ],
+        "name": "FileAccessRemoved",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
                 "indexed": false,
                 "internalType": "uint256",
                 "name": "fileId",
@@ -128,6 +147,26 @@
                 "internalType": "bytes",
                 "name": "_publicKey",
                 "type": "bytes"
+            },
+            {
+                "internalType": "address",
+                "name": "_addressBeyondRelayer",
+                "type": "address"
+            },
+            {
+                "internalType": "uint8",
+                "name": "_v",
+                "type": "uint8"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "_r",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "_s",
+                "type": "bytes32"
             }
         ],
         "name": "setPublicKey",
@@ -217,6 +256,26 @@
             }
         ],
         "name": "shareFileEncryptionKey",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_fileId",
+                "type": "uint256"
+            },
+            {
+                "internalType": "address",
+                "name": "_to",
+                "type": "address"
+            }
+        ],
+        "name": "removeAccessToFile",
         "outputs": [],
         "payable": false,
         "stateMutability": "nonpayable",

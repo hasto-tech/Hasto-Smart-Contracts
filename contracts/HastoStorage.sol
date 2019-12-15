@@ -47,6 +47,7 @@ contract HastoStorage {
     event FilePublishment(bytes32 ipfsHash, address indexed publishedBy, uint indexed fileId);
     event FileUpdate(uint indexed fileId, address publishedBy, bytes32 newHash, uint fileVersion);
     event FileEncryptionKeyShared(uint fileId, address indexed to);
+    event FileAccessRemoved(uint indexed fileId, address indexed to);
 
     address owner;
     uint filesCount;
@@ -86,8 +87,19 @@ contract HastoStorage {
 
     // State changing functions
 
-    function setPublicKey(bytes memory _publicKey) public publicKeyHasNotBeenDeclaredAndProven() {
-        require(PublicKeyUtils.isPublicKeyCorrespondingToAddress(msg.sender, _publicKey), "Public key does not correspond to the address");
+    function setPublicKey(
+        bytes memory _publicKey,
+        address _addressBeyondRelayer,
+        uint8 _v,
+        bytes32 _r,
+        bytes32 _s
+    ) public publicKeyHasNotBeenDeclaredAndProven() {
+        require(
+            PublicKeyUtils.isPublicKeyCorrespondingToAddress(_addressBeyondRelayer, _publicKey),
+            "Public key does not correspond to the address"
+        );
+        bytes32 _addressHash = keccak256(abi.encodePacked(_addressBeyondRelayer));
+        require(ecrecover(_addressHash, _v, _r, _s) == _addressBeyondRelayer, "Signatures mismatch");
         users[msg.sender].secp256k1PublicKey = _publicKey;
     }
 
@@ -129,6 +141,14 @@ contract HastoStorage {
         });
         users[_to].sharedFilesIds.push(_fileId);
         emit FileEncryptionKeyShared(_fileId, _to);
+    }
+
+    function removeAccessToFile(
+        uint _fileId,
+        address _to
+    ) public fileExists(_fileId) isFilePublisher(_fileId) correspondingPublicKeyExists(_to) {
+        delete users[_to].filesAccesses[_fileId];
+        emit FileAccessRemoved(_fileId, _to);
     }
 
     // Getters

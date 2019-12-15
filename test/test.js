@@ -11,7 +11,13 @@ describe('HastoSdk class tests', () => {
   const privateKeys = fs.readFileSync('.privateKeys', { encoding: 'utf8' }).split('\n');
   const contractAddress = fs.readFileSync('.contractAddress', { encoding: 'utf8' });
 
-  const hastoSdk = new HastoSdk('http://localhost:5001', 'http://localhost:8545', contractAddress, privateKeys[0]);
+  const hastoSdk = new HastoSdk(
+    'http://localhost:5001',
+    'http://localhost:8545',
+    'http://localhost:8081',
+    contractAddress,
+    privateKeys[0],
+  );
   const plainFile = fs.readFileSync('./yarn.lock', { encoding: 'utf8' });
 
   let fileID;
@@ -50,7 +56,13 @@ describe('HastoSdk class tests', () => {
     expect(sharedFiles.length).to.equal(0);
   });
 
-  const hastoSdkV2 = new HastoSdk('http://localhost:5001', 'http://localhost:8545', contractAddress, privateKeys[1]);
+  const hastoSdkV2 = new HastoSdk(
+    'http://localhost:5001',
+    'http://localhost:8545',
+    'http://localhost:8081',
+    contractAddress,
+    privateKeys[1],
+  );
 
   it('should set a new public key', async () => {
     await hastoSdkV2.setPublicKey();

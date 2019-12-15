@@ -28,8 +28,10 @@ const utils_1 = require("ethers/utils");
 const ipfsHttpClient = require("ipfs-http-client");
 const ipfsHashesUtils_1 = require("./utils/ipfsHashesUtils");
 const hasto_abi_json_1 = __importDefault(require("./utils/hasto-abi.json"));
+const axios_1 = __importDefault(require("axios"));
 class HastoSdk {
-    constructor(ipfsProviderUrl, ethereumProviderUrl, contractAddress, privateKey) {
+    constructor(ipfsProviderUrl, ethereumProviderUrl, hastoApiUrl, contractAddress, privateKey) {
+        this.hastoApiUrl = hastoApiUrl;
         this.privateKey = privateKey || eth_crypto_1.default.createIdentity().privateKey;
         this.wallet = new ethers_1.Wallet(this.privateKey, new ethers_1.providers.JsonRpcProvider(ethereumProviderUrl));
         this.contractInstance = new ethers_1.Contract(contractAddress, hasto_abi_json_1.default, this.wallet);
@@ -129,10 +131,17 @@ class HastoSdk {
     setPublicKey() {
         return __awaiter(this, void 0, void 0, function* () {
             const publicKey = '0x' + eth_crypto_1.default.publicKeyByPrivateKey(this.privateKey);
+            const addressKeccak = ethers_1.utils.solidityKeccak256(['address'], [this.wallet.address]);
+            const sig = new ethers_1.utils.SigningKey(this.wallet.privateKey).signDigest(addressKeccak);
             try {
-                const tx = yield this.contractInstance.setPublicKey(publicKey);
-                yield tx.wait();
-                return true;
+                if (sig.v) {
+                    const tx = yield this.contractInstance.setPublicKey(publicKey, this.wallet.address, sig.v, sig.r, sig.s);
+                    yield tx.wait();
+                    return true;
+                }
+                else {
+                    return false;
+                }
             }
             catch (err) {
                 if (err.message === 'VM Exception while processing transaction: revert The public key has been already declared') {
@@ -157,7 +166,6 @@ class HastoSdk {
     }
     getSharedFile(fileID) {
         return __awaiter(this, void 0, void 0, function* () {
-            // TODO handle invalid fileID error
             const [hexIv, hexEphemPublicKey, hexCiphertext, hexMac] = yield Promise.all([
                 this.contractInstance.getFileEncryptionIv(fileID),
                 this.contractInstance.getFileEncryptionEphemeralPublicKey(fileID),
@@ -167,7 +175,6 @@ class HastoSdk {
             const [iv, ephemPublicKey, ciphertext, mac] = [hexIv, hexEphemPublicKey, hexCiphertext, hexMac].map(e => {
                 return utils_1.toUtf8String(e);
             });
-            console.log(iv);
             const encryptionKey = yield eth_crypto_1.default.decryptWithPrivateKey(this.privateKey, {
                 iv,
                 ciphertext,
@@ -175,6 +182,30 @@ class HastoSdk {
                 ephemPublicKey,
             });
             return yield this.getFile(fileID, encryptionKey);
+        });
+    }
+    getApiSession() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const baseAuthUrl = `${this.hastoApiUrl}/api/v1/auth`;
+            const requestAuthChallangeUrl = `${baseAuthUrl}/request-challange/${this.wallet.address}`;
+            const challangeResponse = yield axios_1.default.get(requestAuthChallangeUrl);
+            let error = challangeResponse.data.error;
+            if (error) {
+                throw new Error(`Hasto API error, message : ${challangeResponse.data.message}`);
+            }
+            const randomness = challangeResponse.data.randomness;
+            const signature = eth_crypto_1.default.sign(this.privateKey, randomness);
+            const faceAuthChallangeUrl = `${baseAuthUrl}/face-challange`;
+            const challangeFaceResponse = yield axios_1.default.post(faceAuthChallangeUrl, { ethereumAddress: this.wallet.address }, {
+                headers: {
+                    signature,
+                },
+            });
+            error = challangeFaceResponse.data.error;
+            if (error) {
+                throw new Error(`Hasto API error, message : ${challangeFaceResponse.data.message}`);
+            }
+            this.hastoSession = challangeFaceResponse.data.session;
         });
     }
 }

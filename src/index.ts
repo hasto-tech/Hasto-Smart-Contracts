@@ -3,8 +3,8 @@ import SimpleCrypto from 'simple-crypto-js';
 import { SHA256, enc } from 'crypto-js';
 import * as crypto from 'crypto';
 
-import { Wallet, Contract, providers } from 'ethers';
-import { AbiCoder, BigNumber, toUtf8Bytes, parseBytes32String, toUtf8String } from 'ethers/utils';
+import { Wallet, Contract, providers, utils } from 'ethers';
+import { AbiCoder, BigNumber, toUtf8Bytes, toUtf8String } from 'ethers/utils';
 
 import ipfsHttpClient = require('ipfs-http-client');
 
@@ -15,13 +15,23 @@ import { HastoStorage } from '../typechain-build/HastoStorage';
 
 import HastoABI from './utils/hasto-abi.json';
 
+import axios from 'axios';
+
 export class HastoSdk {
   private privateKey: string;
   private contractInstance: HastoStorage;
   private wallet: Wallet;
   private ipfs: any;
 
-  constructor(ipfsProviderUrl: string, ethereumProviderUrl: string, contractAddress: string, privateKey?: string) {
+  private hastoSession?: string;
+
+  constructor(
+    ipfsProviderUrl: string,
+    ethereumProviderUrl: string,
+    private readonly hastoApiUrl: string,
+    contractAddress: string,
+    privateKey?: string,
+  ) {
     this.privateKey = privateKey || EthCrypto.createIdentity().privateKey;
     this.wallet = new Wallet(this.privateKey, new providers.JsonRpcProvider(ethereumProviderUrl));
     this.contractInstance = new Contract(contractAddress, HastoABI, this.wallet) as HastoStorage;
@@ -143,10 +153,16 @@ export class HastoSdk {
 
   async setPublicKey(): Promise<boolean> {
     const publicKey = '0x' + EthCrypto.publicKeyByPrivateKey(this.privateKey);
+    const addressKeccak = utils.solidityKeccak256(['address'], [this.wallet.address]);
+    const sig = new utils.SigningKey(this.wallet.privateKey).signDigest(addressKeccak);
     try {
-      const tx = await this.contractInstance.setPublicKey(publicKey);
-      await tx.wait();
-      return true;
+      if (sig.v) {
+        const tx = await this.contractInstance.setPublicKey(publicKey, this.wallet.address, sig.v, sig.r, sig.s);
+        await tx.wait();
+        return true;
+      } else {
+        return false;
+      }
     } catch (err) {
       if (
         err.message === 'VM Exception while processing transaction: revert The public key has been already declared'
@@ -181,8 +197,6 @@ export class HastoSdk {
   }
 
   async getSharedFile(fileID: number): Promise<HastoFile> {
-    // TODO handle invalid fileID error
-
     const [hexIv, hexEphemPublicKey, hexCiphertext, hexMac] = await Promise.all([
       this.contractInstance.getFileEncryptionIv(fileID),
       this.contractInstance.getFileEncryptionEphemeralPublicKey(fileID),
@@ -202,5 +216,39 @@ export class HastoSdk {
     });
 
     return await this.getFile(fileID, encryptionKey);
+  }
+
+  private async getApiSession() {
+    const baseAuthUrl = `${this.hastoApiUrl}/api/v1/auth`;
+    const requestAuthChallangeUrl = `${baseAuthUrl}/request-challange/${this.wallet.address}`;
+    const challangeResponse = await axios.get(requestAuthChallangeUrl);
+
+    let error: boolean = challangeResponse.data.error;
+
+    if (error) {
+      throw new Error(`Hasto API error, message : ${challangeResponse.data.message}`);
+    }
+
+    const randomness: string = challangeResponse.data.randomness;
+    const signature = EthCrypto.sign(this.privateKey, randomness);
+
+    const faceAuthChallangeUrl = `${baseAuthUrl}/face-challange`;
+    const challangeFaceResponse = await axios.post(
+      faceAuthChallangeUrl,
+      { ethereumAddress: this.wallet.address },
+      {
+        headers: {
+          signature,
+        },
+      },
+    );
+
+    error = challangeFaceResponse.data.error;
+
+    if (error) {
+      throw new Error(`Hasto API error, message : ${challangeFaceResponse.data.message}`);
+    }
+
+    this.hastoSession = challangeFaceResponse.data.session;
   }
 }
