@@ -218,6 +218,7 @@ export class HastoSdk {
     return await this.getFile(fileID, encryptionKey);
   }
 
+  // TODO handle hashcash computation
   private async getApiSession() {
     const baseAuthUrl = `${this.hastoApiUrl}/api/v1/auth`;
     const requestAuthChallangeUrl = `${baseAuthUrl}/request-challange/${this.wallet.address}`;
@@ -250,5 +251,26 @@ export class HastoSdk {
     }
 
     this.hastoSession = challangeFaceResponse.data.session;
+  }
+
+  private computeHashcash(difficulty: number, durationDecimals: number): number {
+    const now = Date.now() / 1000;
+    const roundedCurrentTimestamp = Math.floor(now / Math.pow(10, durationDecimals)) * Math.pow(10, durationDecimals);
+
+    let hashCashSolved = false;
+    let solution = 0;
+    while (!hashCashSolved) {
+      const hash = SHA256(`${roundedCurrentTimestamp}:${solution}`).toString(enc.Hex);
+      let tmp = '';
+      for (let i = 0; i < difficulty; i++) {
+        tmp += '0';
+      }
+      hashCashSolved = hash.slice(0, difficulty) == tmp;
+      if (hashCashSolved) {
+        break;
+      }
+      solution++;
+    }
+    return solution;
   }
 }
