@@ -2,6 +2,7 @@
 
 const expect = require('chai').expect;
 const HastoSdk = require('../dist').HastoSdk;
+const readLineSync = require('readline-sync');
 
 const fs = require('fs');
 
@@ -22,6 +23,16 @@ describe('HastoSdk class tests', () => {
 
   let fileID;
   let fileEncryptionKey;
+
+  it('should set an email identity', async () => {
+    const email = readLineSync.question('input your email address: ');
+    await hastoSdk.setIdentityEmail(email);
+  });
+
+  it('should confirm an email identity', async () => {
+    const confirmationCode = readLineSync.question("Please type the confirmation code you've received: ");
+    await hastoSdk.confirmIdentity(confirmationCode);
+  });
 
   it('should publish a file', async () => {
     const ipfsUpload = await hastoSdk.uploadFile(Buffer.from(plainFile));

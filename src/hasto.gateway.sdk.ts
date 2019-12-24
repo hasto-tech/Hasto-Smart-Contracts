@@ -70,15 +70,17 @@ export class HastoGatewaySdk {
   }
 
   async confirmIdentity(confirmationCode: string) {
+    await this.refreshAuthToken();
     const confirmIdentityUrl = `${this.hastoApiUrl}/api/v1/identity/confirm`;
     try {
-      await axios.post(confirmIdentityUrl, { dto: { confirmationCode } }, { headers: { authtoken: this.authToken } });
+      await axios.post(confirmIdentityUrl, { confirmationCode }, { headers: { authtoken: this.authToken } });
     } catch (err) {
       throw new Error(`Request to gateway failed details: ${JSON.stringify(err.response.data)}`);
     }
   }
 
   private async setIdentity(args: { email?: string; phoneNumber?: string }) {
+    await this.refreshAuthToken();
     if (!args.email && !args.phoneNumber) {
       throw new Error('Invalid arguments at least one needs to be not null');
     }
@@ -97,7 +99,7 @@ export class HastoGatewaySdk {
     }
 
     try {
-      await axios.post(setIdentityUrl, { dto }, { headers: { authtoken: this.authToken } });
+      await axios.post(setIdentityUrl, dto, { headers: { authtoken: this.authToken } });
     } catch (err) {
       throw new Error(`Request to gateway failed details: ${JSON.stringify(err.response.data)}`);
     }

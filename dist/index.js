@@ -184,5 +184,35 @@ class HastoSdk {
             return yield this.getFile(fileID, encryptionKey);
         });
     }
+    setIdentityEmail(email) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                yield this.hastoGatewaySdk.setIdentityEmail(email);
+            }
+            catch (err) {
+                throw err;
+            }
+        });
+    }
+    setIdentityPhoneNumber(phoneNumber) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                yield this.hastoGatewaySdk.setIdentityPhoneNumber(phoneNumber);
+            }
+            catch (err) {
+                throw err;
+            }
+        });
+    }
+    confirmIdentity(confirmationCode) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                yield this.hastoGatewaySdk.confirmIdentity(confirmationCode);
+            }
+            catch (err) {
+                throw err;
+            }
+        });
+    }
 }
 exports.HastoSdk = HastoSdk;

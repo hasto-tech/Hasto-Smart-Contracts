@@ -218,4 +218,28 @@ export class HastoSdk {
 
     return await this.getFile(fileID, encryptionKey);
   }
+
+  async setIdentityEmail(email: string) {
+    try {
+      await this.hastoGatewaySdk.setIdentityEmail(email);
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async setIdentityPhoneNumber(phoneNumber: string) {
+    try {
+      await this.hastoGatewaySdk.setIdentityPhoneNumber(phoneNumber);
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async confirmIdentity(confirmationCode: string) {
+    try {
+      await this.hastoGatewaySdk.confirmIdentity(confirmationCode);
+    } catch (err) {
+      throw err;
+    }
+  }
 }

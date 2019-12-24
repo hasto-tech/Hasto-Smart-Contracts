@@ -29,25 +29,6 @@ class HastoGatewaySdk {
         this.privateKey = privateKey;
         this.walletAddress = walletAddress;
     }
-    computeHashcash(difficulty, durationDecimals) {
-        const now = Date.now() / 1000;
-        const roundedCurrentTimestamp = Math.floor(now / Math.pow(10, durationDecimals)) * Math.pow(10, durationDecimals);
-        let hashCashSolved = false;
-        let solution = 0;
-        while (!hashCashSolved) {
-            const hash = crypto_js_1.SHA256(`${roundedCurrentTimestamp}:${solution}`).toString(crypto_js_1.enc.Hex);
-            let tmp = '';
-            for (let i = 0; i < difficulty; i++) {
-                tmp += '0';
-            }
-            hashCashSolved = hash.slice(0, difficulty) == tmp;
-            if (hashCashSolved) {
-                break;
-            }
-            solution++;
-        }
-        return solution;
-    }
     setHastoApiAuthToken() {
         return __awaiter(this, void 0, void 0, function* () {
             const baseAuthUrl = `${this.hastoApiUrl}/api/v1/auth`;
@@ -82,6 +63,63 @@ class HastoGatewaySdk {
             return { ipfsHash, usedTransfer };
         });
     }
+    setIdentityEmail(email) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                yield this.setIdentity({ email });
+            }
+            catch (err) {
+                throw err;
+            }
+        });
+    }
+    setIdentityPhoneNumber(phoneNumber) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                yield this.setIdentity({ phoneNumber });
+            }
+            catch (err) {
+                throw err;
+            }
+        });
+    }
+    confirmIdentity(confirmationCode) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.refreshAuthToken();
+            const confirmIdentityUrl = `${this.hastoApiUrl}/api/v1/identity/confirm`;
+            try {
+                yield axios_1.default.post(confirmIdentityUrl, { confirmationCode }, { headers: { authtoken: this.authToken } });
+            }
+            catch (err) {
+                throw new Error(`Request to gateway failed details: ${JSON.stringify(err.response.data)}`);
+            }
+        });
+    }
+    setIdentity(args) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.refreshAuthToken();
+            if (!args.email && !args.phoneNumber) {
+                throw new Error('Invalid arguments at least one needs to be not null');
+            }
+            if (args.email && args.phoneNumber) {
+                throw new Error('Invalid arguments these properties need to set separately');
+            }
+            let dto = {};
+            const setIdentityUrl = `${this.hastoApiUrl}/api/v1/identity/set`;
+            if (args.email) {
+                dto.email = args.email;
+            }
+            else if (args.phoneNumber) {
+                dto.phoneNumber = args.phoneNumber;
+            }
+            try {
+                yield axios_1.default.post(setIdentityUrl, dto, { headers: { authtoken: this.authToken } });
+            }
+            catch (err) {
+                throw new Error(`Request to gateway failed details: ${JSON.stringify(err.response.data)}`);
+            }
+        });
+    }
     refreshAuthToken() {
         return __awaiter(this, void 0, void 0, function* () {
             if (!this.authToken) {
@@ -99,6 +137,25 @@ class HastoGatewaySdk {
             }
             return;
         });
+    }
+    computeHashcash(difficulty, durationDecimals) {
+        const now = Date.now() / 1000;
+        const roundedCurrentTimestamp = Math.floor(now / Math.pow(10, durationDecimals)) * Math.pow(10, durationDecimals);
+        let hashCashSolved = false;
+        let solution = 0;
+        while (!hashCashSolved) {
+            const hash = crypto_js_1.SHA256(`${roundedCurrentTimestamp}:${solution}`).toString(crypto_js_1.enc.Hex);
+            let tmp = '';
+            for (let i = 0; i < difficulty; i++) {
+                tmp += '0';
+            }
+            hashCashSolved = hash.slice(0, difficulty) == tmp;
+            if (hashCashSolved) {
+                break;
+            }
+            solution++;
+        }
+        return solution;
     }
 }
 exports.HastoGatewaySdk = HastoGatewaySdk;
