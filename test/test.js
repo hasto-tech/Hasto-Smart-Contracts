@@ -14,7 +14,7 @@ describe('HastoSdk class tests', () => {
   const hastoSdk = new HastoSdk(
     'http://localhost:5001',
     'http://localhost:8545',
-    'http://localhost:8081',
+    'http://localhost:8088',
     contractAddress,
     privateKeys[0],
   );
@@ -22,6 +22,7 @@ describe('HastoSdk class tests', () => {
 
   let fileID;
   let fileEncryptionKey;
+
   it('should publish a file', async () => {
     const ipfsUpload = await hastoSdk.uploadFile(Buffer.from(plainFile));
     fileID = ipfsUpload.fileID;

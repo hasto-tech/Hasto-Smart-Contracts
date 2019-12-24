@@ -15,7 +15,7 @@ import { HastoStorage } from '../typechain-build/HastoStorage';
 
 import HastoABI from './utils/hasto-abi.json';
 
-import axios from 'axios';
+import { HastoGatewaySdk } from './hasto.gateway.sdk';
 
 export class HastoSdk {
   private privateKey: string;
@@ -23,12 +23,12 @@ export class HastoSdk {
   private wallet: Wallet;
   private ipfs: any;
 
-  private hastoSession?: string;
+  private hastoGatewaySdk: HastoGatewaySdk;
 
   constructor(
     ipfsProviderUrl: string,
     ethereumProviderUrl: string,
-    private readonly hastoApiUrl: string,
+    hastoApiUrl: string,
     contractAddress: string,
     privateKey?: string,
   ) {
@@ -36,16 +36,17 @@ export class HastoSdk {
     this.wallet = new Wallet(this.privateKey, new providers.JsonRpcProvider(ethereumProviderUrl));
     this.contractInstance = new Contract(contractAddress, HastoABI, this.wallet) as HastoStorage;
     this.ipfs = ipfsHttpClient(ipfsProviderUrl, { protocol: 'http' });
+    this.hastoGatewaySdk = new HastoGatewaySdk(hastoApiUrl, this.privateKey, this.wallet.address);
   }
 
   async uploadFile(bytesFile: Buffer): Promise<HastoIpfsUpload> {
     const key = crypto.randomBytes(256).toString('hex');
     const simpleCrypto = new SimpleCrypto(key);
     const cipheredBytes = simpleCrypto.encrypt(bytesFile.toString('utf8'));
-    const ipfsContent = await this.ipfs.add(cipheredBytes);
     const encryptionKeyHash = '0x' + SHA256(key).toString(enc.Hex);
 
-    const ipfsHash = ipfsContent[0].hash;
+    const gatewayIpfsUploadResponse = await this.hastoGatewaySdk.addToIpfs(cipheredBytes);
+    const ipfsHash: string = gatewayIpfsUploadResponse.ipfsHash;
 
     // Ethereum transaction
 
@@ -127,9 +128,9 @@ export class HastoSdk {
 
     const simpleCrypto = new SimpleCrypto(encryptionKey);
     const cipheredBytes = simpleCrypto.encrypt(bytesFile.toString('utf8'));
-    const ipfsContent = await this.ipfs.add(cipheredBytes);
 
-    const ipfsHash = ipfsContent[0].hash;
+    const gatewayIpfsUploadResponse = await this.hastoGatewaySdk.addToIpfs(cipheredBytes);
+    const ipfsHash: string = gatewayIpfsUploadResponse.ipfsHash;
 
     const bts32IpfsHash = await ipfsHashToBytes32(ipfsHash);
 
@@ -216,61 +217,5 @@ export class HastoSdk {
     });
 
     return await this.getFile(fileID, encryptionKey);
-  }
-
-  // TODO handle hashcash computation
-  private async getApiSession() {
-    const baseAuthUrl = `${this.hastoApiUrl}/api/v1/auth`;
-    const requestAuthChallangeUrl = `${baseAuthUrl}/request-challange/${this.wallet.address}`;
-    const challangeResponse = await axios.get(requestAuthChallangeUrl);
-
-    let error: boolean = challangeResponse.data.error;
-
-    if (error) {
-      throw new Error(`Hasto API error, message : ${challangeResponse.data.message}`);
-    }
-
-    const randomness: string = challangeResponse.data.randomness;
-    const signature = EthCrypto.sign(this.privateKey, randomness);
-
-    const faceAuthChallangeUrl = `${baseAuthUrl}/face-challange`;
-    const challangeFaceResponse = await axios.post(
-      faceAuthChallangeUrl,
-      { ethereumAddress: this.wallet.address },
-      {
-        headers: {
-          signature,
-        },
-      },
-    );
-
-    error = challangeFaceResponse.data.error;
-
-    if (error) {
-      throw new Error(`Hasto API error, message : ${challangeFaceResponse.data.message}`);
-    }
-
-    this.hastoSession = challangeFaceResponse.data.session;
-  }
-
-  private computeHashcash(difficulty: number, durationDecimals: number): number {
-    const now = Date.now() / 1000;
-    const roundedCurrentTimestamp = Math.floor(now / Math.pow(10, durationDecimals)) * Math.pow(10, durationDecimals);
-
-    let hashCashSolved = false;
-    let solution = 0;
-    while (!hashCashSolved) {
-      const hash = SHA256(`${roundedCurrentTimestamp}:${solution}`).toString(enc.Hex);
-      let tmp = '';
-      for (let i = 0; i < difficulty; i++) {
-        tmp += '0';
-      }
-      hashCashSolved = hash.slice(0, difficulty) == tmp;
-      if (hashCashSolved) {
-        break;
-      }
-      solution++;
-    }
-    return solution;
   }
 }

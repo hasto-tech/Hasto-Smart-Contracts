@@ -28,23 +28,23 @@ const utils_1 = require("ethers/utils");
 const ipfsHttpClient = require("ipfs-http-client");
 const ipfsHashesUtils_1 = require("./utils/ipfsHashesUtils");
 const hasto_abi_json_1 = __importDefault(require("./utils/hasto-abi.json"));
-const axios_1 = __importDefault(require("axios"));
+const hasto_gateway_sdk_1 = require("./hasto.gateway.sdk");
 class HastoSdk {
     constructor(ipfsProviderUrl, ethereumProviderUrl, hastoApiUrl, contractAddress, privateKey) {
-        this.hastoApiUrl = hastoApiUrl;
         this.privateKey = privateKey || eth_crypto_1.default.createIdentity().privateKey;
         this.wallet = new ethers_1.Wallet(this.privateKey, new ethers_1.providers.JsonRpcProvider(ethereumProviderUrl));
         this.contractInstance = new ethers_1.Contract(contractAddress, hasto_abi_json_1.default, this.wallet);
         this.ipfs = ipfsHttpClient(ipfsProviderUrl, { protocol: 'http' });
+        this.hastoGatewaySdk = new hasto_gateway_sdk_1.HastoGatewaySdk(hastoApiUrl, this.privateKey, this.wallet.address);
     }
     uploadFile(bytesFile) {
         return __awaiter(this, void 0, void 0, function* () {
             const key = crypto.randomBytes(256).toString('hex');
             const simpleCrypto = new simple_crypto_js_1.default(key);
             const cipheredBytes = simpleCrypto.encrypt(bytesFile.toString('utf8'));
-            const ipfsContent = yield this.ipfs.add(cipheredBytes);
             const encryptionKeyHash = '0x' + crypto_js_1.SHA256(key).toString(crypto_js_1.enc.Hex);
-            const ipfsHash = ipfsContent[0].hash;
+            const gatewayIpfsUploadResponse = yield this.hastoGatewaySdk.addToIpfs(cipheredBytes);
+            const ipfsHash = gatewayIpfsUploadResponse.ipfsHash;
             // Ethereum transaction
             const bts32IpfsHash = yield ipfsHashesUtils_1.ipfsHashToBytes32(ipfsHash);
             const tx = yield this.contractInstance.publishFile(bts32IpfsHash, encryptionKeyHash);
@@ -108,8 +108,8 @@ class HastoSdk {
             }
             const simpleCrypto = new simple_crypto_js_1.default(encryptionKey);
             const cipheredBytes = simpleCrypto.encrypt(bytesFile.toString('utf8'));
-            const ipfsContent = yield this.ipfs.add(cipheredBytes);
-            const ipfsHash = ipfsContent[0].hash;
+            const gatewayIpfsUploadResponse = yield this.hastoGatewaySdk.addToIpfs(cipheredBytes);
+            const ipfsHash = gatewayIpfsUploadResponse.ipfsHash;
             const bts32IpfsHash = yield ipfsHashesUtils_1.ipfsHashToBytes32(ipfsHash);
             const tx = yield this.contractInstance.updateFile(fileID, bts32IpfsHash);
             const txReceipt = yield tx.wait();
@@ -182,30 +182,6 @@ class HastoSdk {
                 ephemPublicKey,
             });
             return yield this.getFile(fileID, encryptionKey);
-        });
-    }
-    getApiSession() {
-        return __awaiter(this, void 0, void 0, function* () {
-            const baseAuthUrl = `${this.hastoApiUrl}/api/v1/auth`;
-            const requestAuthChallangeUrl = `${baseAuthUrl}/request-challange/${this.wallet.address}`;
-            const challangeResponse = yield axios_1.default.get(requestAuthChallangeUrl);
-            let error = challangeResponse.data.error;
-            if (error) {
-                throw new Error(`Hasto API error, message : ${challangeResponse.data.message}`);
-            }
-            const randomness = challangeResponse.data.randomness;
-            const signature = eth_crypto_1.default.sign(this.privateKey, randomness);
-            const faceAuthChallangeUrl = `${baseAuthUrl}/face-challange`;
-            const challangeFaceResponse = yield axios_1.default.post(faceAuthChallangeUrl, { ethereumAddress: this.wallet.address }, {
-                headers: {
-                    signature,
-                },
-            });
-            error = challangeFaceResponse.data.error;
-            if (error) {
-                throw new Error(`Hasto API error, message : ${challangeFaceResponse.data.message}`);
-            }
-            this.hastoSession = challangeFaceResponse.data.session;
         });
     }
 }
