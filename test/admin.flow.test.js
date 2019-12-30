@@ -13,6 +13,8 @@ describe('Hasto - admin flow test', () => {
   const adminPrivateKey = privateKeys[0];
   const contractAddress = fs.readFileSync('.contractAddress', { encoding: 'utf8' });
 
+  const pubKey = utils.computePublicKey(privateKeys[1]);
+
   const hastoSdk = new HastoSdk(
     'http://localhost:5001',
     'http://localhost:8545',
@@ -23,6 +25,6 @@ describe('Hasto - admin flow test', () => {
   );
 
   it('should assign some transfer to', async () => {
-    await hastoSdk.assignTransfer('0xc9934CF26541a0cAcf4581EEEbb237715b05ca71', 20);
+    await hastoSdk.assignTransfer(pubKey.substring(2), 20);
   });
 });

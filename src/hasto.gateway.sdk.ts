@@ -71,6 +71,7 @@ export class HastoGatewaySdk {
 
     const url = `${this.hastoApiUrl}/api/v1/transfers/assign-transfer`;
     const body = { whom, quantity };
+
     try {
       await axios.post(url, body, { headers: { authtoken: this.authToken } });
     } catch (err) {

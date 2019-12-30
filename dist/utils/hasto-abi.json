@@ -100,6 +100,19 @@
         "type": "event"
     },
     {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "by",
+                "type": "address"
+            }
+        ],
+        "name": "PublicKeySet",
+        "type": "event"
+    },
+    {
         "constant": true,
         "inputs": [
             {

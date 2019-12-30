@@ -40,17 +40,14 @@ class HastoGatewaySdk {
         return __awaiter(this, void 0, void 0, function* () {
             yield this.refreshAuthToken();
             const hastoIpfsUploadUrl = `${this.hastoApiUrl}/api/v1/ipfs/add`;
-            console.log('dupa');
             let response;
             try {
                 response = yield axios_1.default.post(hastoIpfsUploadUrl, { rawData: data }, { headers: { authtoken: this.authToken } });
             }
             catch (err) {
-                console.log(err);
                 throw new Error(`Request to gateway failed details: ${JSON.stringify(err.response.data)}`);
             }
             const hastoIpfsResponse = response;
-            console.log(hastoIpfsResponse);
             const ipfsHash = hastoIpfsResponse.data.ipfsHash;
             const usedTransfer = hastoIpfsResponse.data.usedTransfer;
             return { ipfsHash, usedTransfer };
@@ -100,7 +97,6 @@ class HastoGatewaySdk {
                 yield axios_1.default.post(url, body, { headers: { authtoken: this.authToken } });
             }
             catch (err) {
-                console.log(err);
                 throw new Error(`Request to gateway failed details: ${JSON.stringify(err.response.data)}`);
             }
         });
@@ -140,10 +136,10 @@ class HastoGatewaySdk {
             }
         });
     }
-    authorizeAsUser() {
+    authorize() {
         return __awaiter(this, void 0, void 0, function* () {
             const baseAuthUrl = `${this.hastoApiUrl}/api/v1/auth`;
-            const requestAuthChallengeUrl = `${baseAuthUrl}/request-challenge/user`;
+            const requestAuthChallengeUrl = `${baseAuthUrl}/request-challenge`;
             const hashcash = yield this.computeHashcash(4, 2);
             let challengeResponse;
             try {
@@ -156,7 +152,7 @@ class HastoGatewaySdk {
             }
             const randomness = challengeResponse.data.randomness;
             const signature = eth_crypto_1.default.sign(this.privKey, randomness);
-            const faceAuthChallangeUrl = `${baseAuthUrl}/face-challenge/user`;
+            const faceAuthChallangeUrl = `${baseAuthUrl}/face-challenge`;
             let challangeFaceResponse;
             try {
                 challangeFaceResponse = yield axios_1.default.post(faceAuthChallangeUrl, { publicKey: this.publicKey }, {
@@ -171,57 +167,23 @@ class HastoGatewaySdk {
             this.authToken = challangeFaceResponse.data.authToken;
         });
     }
-    authorizeAsAdmin() {
-        return __awaiter(this, void 0, void 0, function* () {
-            const baseAuthUrl = `${this.hastoApiUrl}/api/v1/auth`;
-            const requestAuthChallengeUrl = `${baseAuthUrl}/request-challenge/admin`;
-            const hashcash = yield this.computeHashcash(4, 2);
-            let challengeResponse;
-            try {
-                challengeResponse = yield axios_1.default.get(requestAuthChallengeUrl, {
-                    headers: { hashcash, publickey: this.publicKey },
-                });
-            }
-            catch (err) {
-                throw new Error(`Request to gateway failed details: ${JSON.stringify(err.response.data)}`);
-            }
-            const randomness = challengeResponse.data.randomness;
-            const signature = eth_crypto_1.default.sign(this.privKey, randomness);
-            const faceAuthChallangeUrl = `${baseAuthUrl}/face-challenge/admin`;
-            const challangeFaceResponse = yield axios_1.default.post(faceAuthChallangeUrl, { publicKey: this.publicKey }, {
-                headers: {
-                    signature,
-                },
-            });
-            this.authToken = challangeFaceResponse.data.authToken;
-        });
-    }
     refreshAuthToken() {
         return __awaiter(this, void 0, void 0, function* () {
             if (!this.authToken) {
-                if (this.role === 'user') {
-                    yield this.authorizeAsUser();
-                }
-                else {
-                    yield this.authorizeAsAdmin();
-                }
+                yield this.authorize();
             }
             const rawToken = jwt.decode(this.authToken);
             const expires = rawToken.exp;
+            const role = rawToken.role;
             if (Date.now() / 1000 >= expires) {
                 try {
-                    if (this.role === 'user') {
-                        yield this.authorizeAsUser();
-                    }
-                    else {
-                        this.authorizeAsAdmin();
-                    }
+                    yield this.authorize();
                 }
                 catch (err) {
                     throw err;
                 }
             }
-            return;
+            this.role = role;
         });
     }
     computeHashcash(difficulty, durationDecimals) {

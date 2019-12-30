@@ -15,8 +15,7 @@ export declare class HastoGatewaySdk {
     assignTransfer(whom: string, quantity: number): Promise<void>;
     removeTransfer(): Promise<void>;
     private setIdentity;
-    private authorizeAsUser;
-    private authorizeAsAdmin;
+    private authorize;
     private refreshAuthToken;
     private computeHashcash;
 }
