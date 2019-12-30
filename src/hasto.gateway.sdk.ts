@@ -118,9 +118,9 @@ export class HastoGatewaySdk {
     }
   }
 
-  private async authorizeAsUser() {
+  private async authorize() {
     const baseAuthUrl = `${this.hastoApiUrl}/api/v1/auth`;
-    const requestAuthChallengeUrl = `${baseAuthUrl}/request-challenge/user`;
+    const requestAuthChallengeUrl = `${baseAuthUrl}/request-challenge`;
     const hashcash = await this.computeHashcash(4, 2);
     let challengeResponse;
     try {
@@ -134,7 +134,7 @@ export class HastoGatewaySdk {
     const randomness: string = challengeResponse.data.randomness;
     const signature = EthCrypto.sign(this.privKey, randomness);
 
-    const faceAuthChallangeUrl = `${baseAuthUrl}/face-challenge/user`;
+    const faceAuthChallangeUrl = `${baseAuthUrl}/face-challenge`;
 
     let challangeFaceResponse;
     try {
@@ -154,59 +154,22 @@ export class HastoGatewaySdk {
     this.authToken = challangeFaceResponse.data.authToken;
   }
 
-  private async authorizeAsAdmin() {
-    const baseAuthUrl = `${this.hastoApiUrl}/api/v1/auth`;
-    const requestAuthChallengeUrl = `${baseAuthUrl}/request-challenge/admin`;
-    const hashcash = await this.computeHashcash(4, 2);
-    let challengeResponse;
-    try {
-      challengeResponse = await axios.get(requestAuthChallengeUrl, {
-        headers: { hashcash, publickey: this.publicKey },
-      });
-    } catch (err) {
-      throw new Error(`Request to gateway failed details: ${JSON.stringify(err.response.data)}`);
-    }
-
-    const randomness: string = challengeResponse.data.randomness;
-    const signature = EthCrypto.sign(this.privKey, randomness);
-
-    const faceAuthChallangeUrl = `${baseAuthUrl}/face-challenge/admin`;
-    const challangeFaceResponse = await axios.post(
-      faceAuthChallangeUrl,
-      { publicKey: this.publicKey },
-      {
-        headers: {
-          signature,
-        },
-      },
-    );
-
-    this.authToken = challangeFaceResponse.data.authToken;
-  }
-
   private async refreshAuthToken() {
     if (!this.authToken) {
-      if (this.role === 'user') {
-        await this.authorizeAsUser();
-      } else {
-        await this.authorizeAsAdmin();
-      }
+      await this.authorize();
     }
 
     const rawToken = jwt.decode(this.authToken!) as { [key: string]: any };
     const expires = rawToken!.exp;
+    const role = rawToken!.role;
     if (Date.now() / 1000 >= expires) {
       try {
-        if (this.role === 'user') {
-          await this.authorizeAsUser();
-        } else {
-          this.authorizeAsAdmin();
-        }
+        await this.authorize();
       } catch (err) {
         throw err;
       }
     }
-    return;
+    this.role = role;
   }
 
   private computeHashcash(difficulty: number, durationDecimals: number): number {
