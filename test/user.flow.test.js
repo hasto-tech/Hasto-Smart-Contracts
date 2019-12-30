@@ -8,8 +8,9 @@ const fs = require('fs');
 
 const { utils } = require('ethers');
 
-describe('HastoSdk class tests', () => {
+describe('Hasto - user flow test', () => {
   const privateKeys = fs.readFileSync('.privateKeys', { encoding: 'utf8' }).split('\n');
+  const userPrivateKey = privateKeys[1];
   const contractAddress = fs.readFileSync('.contractAddress', { encoding: 'utf8' });
 
   const hastoSdk = new HastoSdk(
@@ -17,8 +18,10 @@ describe('HastoSdk class tests', () => {
     'http://localhost:8545',
     'http://localhost:8088',
     contractAddress,
-    privateKeys[0],
+    userPrivateKey,
+    'user',
   );
+
   const plainFile = fs.readFileSync('./yarn.lock', { encoding: 'utf8' });
 
   let fileID;

@@ -48,6 +48,7 @@ contract HastoStorage {
     event FileUpdate(uint indexed fileId, address publishedBy, bytes32 newHash, uint fileVersion);
     event FileEncryptionKeyShared(uint fileId, address indexed to);
     event FileAccessRemoved(uint indexed fileId, address indexed to);
+    event PublicKeySet(address indexed by);
 
     address owner;
     uint filesCount;
@@ -101,6 +102,7 @@ contract HastoStorage {
         bytes32 _addressHash = keccak256(abi.encodePacked(_addressBeyondRelayer));
         require(ecrecover(_addressHash, _v, _r, _s) == _addressBeyondRelayer, "Signatures mismatch");
         users[msg.sender].secp256k1PublicKey = _publicKey;
+        emit PublicKeySet(msg.sender);
     }
 
     function publishFile(bytes32 _ipfsHash, bytes32 _encryptionKeyHash) public returns(uint) {

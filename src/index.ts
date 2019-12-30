@@ -3,7 +3,7 @@ import SimpleCrypto from 'simple-crypto-js';
 import { SHA256, enc } from 'crypto-js';
 import * as crypto from 'crypto';
 
-import { Wallet, Contract, providers, utils } from 'ethers';
+import { Wallet, Contract, providers, utils, ethers } from 'ethers';
 import { AbiCoder, BigNumber, toUtf8Bytes, toUtf8String } from 'ethers/utils';
 
 import ipfsHttpClient = require('ipfs-http-client');
@@ -17,13 +17,11 @@ import HastoABI from './utils/hasto-abi.json';
 
 import { HastoGatewaySdk } from './hasto.gateway.sdk';
 
-export class HastoSdk {
+export class HastoSdk extends HastoGatewaySdk {
   private privateKey: string;
   private contractInstance: HastoStorage;
   private wallet: Wallet;
   private ipfs: any;
-
-  private hastoGatewaySdk: HastoGatewaySdk;
 
   constructor(
     ipfsProviderUrl: string,
@@ -31,12 +29,17 @@ export class HastoSdk {
     hastoApiUrl: string,
     contractAddress: string,
     privateKey?: string,
+    role?: 'admin' | 'user',
   ) {
-    this.privateKey = privateKey || EthCrypto.createIdentity().privateKey;
-    this.wallet = new Wallet(this.privateKey, new providers.JsonRpcProvider(ethereumProviderUrl));
+    // tmp variables
+    const privKey = privateKey || EthCrypto.createIdentity().privateKey;
+    const wallet = new Wallet(privKey, new providers.JsonRpcProvider(ethereumProviderUrl));
+
+    super(hastoApiUrl, privKey, role);
+    this.privateKey = privKey;
+    this.wallet = wallet;
     this.contractInstance = new Contract(contractAddress, HastoABI, this.wallet) as HastoStorage;
     this.ipfs = ipfsHttpClient(ipfsProviderUrl, { protocol: 'http' });
-    this.hastoGatewaySdk = new HastoGatewaySdk(hastoApiUrl, this.privateKey, this.wallet.address);
   }
 
   async uploadFile(bytesFile: Buffer): Promise<HastoIpfsUpload> {
@@ -45,7 +48,7 @@ export class HastoSdk {
     const cipheredBytes = simpleCrypto.encrypt(bytesFile.toString('utf8'));
     const encryptionKeyHash = '0x' + SHA256(key).toString(enc.Hex);
 
-    const gatewayIpfsUploadResponse = await this.hastoGatewaySdk.addToIpfs(cipheredBytes);
+    const gatewayIpfsUploadResponse = await this.addToIpfs(cipheredBytes);
     const ipfsHash: string = gatewayIpfsUploadResponse.ipfsHash;
 
     // Ethereum transaction
@@ -129,7 +132,7 @@ export class HastoSdk {
     const simpleCrypto = new SimpleCrypto(encryptionKey);
     const cipheredBytes = simpleCrypto.encrypt(bytesFile.toString('utf8'));
 
-    const gatewayIpfsUploadResponse = await this.hastoGatewaySdk.addToIpfs(cipheredBytes);
+    const gatewayIpfsUploadResponse = await this.addToIpfs(cipheredBytes);
     const ipfsHash: string = gatewayIpfsUploadResponse.ipfsHash;
 
     const bts32IpfsHash = await ipfsHashToBytes32(ipfsHash);
@@ -217,29 +220,5 @@ export class HastoSdk {
     });
 
     return await this.getFile(fileID, encryptionKey);
-  }
-
-  async setIdentityEmail(email: string) {
-    try {
-      await this.hastoGatewaySdk.setIdentityEmail(email);
-    } catch (err) {
-      throw err;
-    }
-  }
-
-  async setIdentityPhoneNumber(phoneNumber: string) {
-    try {
-      await this.hastoGatewaySdk.setIdentityPhoneNumber(phoneNumber);
-    } catch (err) {
-      throw err;
-    }
-  }
-
-  async confirmIdentity(confirmationCode: string) {
-    try {
-      await this.hastoGatewaySdk.confirmIdentity(confirmationCode);
-    } catch (err) {
-      throw err;
-    }
   }
 }

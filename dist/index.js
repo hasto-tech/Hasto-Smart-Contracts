@@ -29,13 +29,16 @@ const ipfsHttpClient = require("ipfs-http-client");
 const ipfsHashesUtils_1 = require("./utils/ipfsHashesUtils");
 const hasto_abi_json_1 = __importDefault(require("./utils/hasto-abi.json"));
 const hasto_gateway_sdk_1 = require("./hasto.gateway.sdk");
-class HastoSdk {
-    constructor(ipfsProviderUrl, ethereumProviderUrl, hastoApiUrl, contractAddress, privateKey) {
-        this.privateKey = privateKey || eth_crypto_1.default.createIdentity().privateKey;
-        this.wallet = new ethers_1.Wallet(this.privateKey, new ethers_1.providers.JsonRpcProvider(ethereumProviderUrl));
+class HastoSdk extends hasto_gateway_sdk_1.HastoGatewaySdk {
+    constructor(ipfsProviderUrl, ethereumProviderUrl, hastoApiUrl, contractAddress, privateKey, role) {
+        // tmp variables
+        const privKey = privateKey || eth_crypto_1.default.createIdentity().privateKey;
+        const wallet = new ethers_1.Wallet(privKey, new ethers_1.providers.JsonRpcProvider(ethereumProviderUrl));
+        super(hastoApiUrl, privKey, role);
+        this.privateKey = privKey;
+        this.wallet = wallet;
         this.contractInstance = new ethers_1.Contract(contractAddress, hasto_abi_json_1.default, this.wallet);
         this.ipfs = ipfsHttpClient(ipfsProviderUrl, { protocol: 'http' });
-        this.hastoGatewaySdk = new hasto_gateway_sdk_1.HastoGatewaySdk(hastoApiUrl, this.privateKey, this.wallet.address);
     }
     uploadFile(bytesFile) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -43,7 +46,7 @@ class HastoSdk {
             const simpleCrypto = new simple_crypto_js_1.default(key);
             const cipheredBytes = simpleCrypto.encrypt(bytesFile.toString('utf8'));
             const encryptionKeyHash = '0x' + crypto_js_1.SHA256(key).toString(crypto_js_1.enc.Hex);
-            const gatewayIpfsUploadResponse = yield this.hastoGatewaySdk.addToIpfs(cipheredBytes);
+            const gatewayIpfsUploadResponse = yield this.addToIpfs(cipheredBytes);
             const ipfsHash = gatewayIpfsUploadResponse.ipfsHash;
             // Ethereum transaction
             const bts32IpfsHash = yield ipfsHashesUtils_1.ipfsHashToBytes32(ipfsHash);
@@ -108,7 +111,7 @@ class HastoSdk {
             }
             const simpleCrypto = new simple_crypto_js_1.default(encryptionKey);
             const cipheredBytes = simpleCrypto.encrypt(bytesFile.toString('utf8'));
-            const gatewayIpfsUploadResponse = yield this.hastoGatewaySdk.addToIpfs(cipheredBytes);
+            const gatewayIpfsUploadResponse = yield this.addToIpfs(cipheredBytes);
             const ipfsHash = gatewayIpfsUploadResponse.ipfsHash;
             const bts32IpfsHash = yield ipfsHashesUtils_1.ipfsHashToBytes32(ipfsHash);
             const tx = yield this.contractInstance.updateFile(fileID, bts32IpfsHash);
@@ -182,36 +185,6 @@ class HastoSdk {
                 ephemPublicKey,
             });
             return yield this.getFile(fileID, encryptionKey);
-        });
-    }
-    setIdentityEmail(email) {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                yield this.hastoGatewaySdk.setIdentityEmail(email);
-            }
-            catch (err) {
-                throw err;
-            }
-        });
-    }
-    setIdentityPhoneNumber(phoneNumber) {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                yield this.hastoGatewaySdk.setIdentityPhoneNumber(phoneNumber);
-            }
-            catch (err) {
-                throw err;
-            }
-        });
-    }
-    confirmIdentity(confirmationCode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                yield this.hastoGatewaySdk.confirmIdentity(confirmationCode);
-            }
-            catch (err) {
-                throw err;
-            }
         });
     }
 }

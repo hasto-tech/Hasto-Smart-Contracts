@@ -23,41 +23,34 @@ const axios_1 = __importDefault(require("axios"));
 const jwt = __importStar(require("jsonwebtoken"));
 const crypto_js_1 = require("crypto-js");
 const eth_crypto_1 = __importDefault(require("eth-crypto"));
+const ethers_1 = require("ethers");
 class HastoGatewaySdk {
-    constructor(hastoApiUrl, privateKey, walletAddress) {
+    constructor(hastoApiUrl, privKey, role) {
         this.hastoApiUrl = hastoApiUrl;
-        this.privateKey = privateKey;
-        this.walletAddress = walletAddress;
-    }
-    setHastoApiAuthToken() {
-        return __awaiter(this, void 0, void 0, function* () {
-            const baseAuthUrl = `${this.hastoApiUrl}/api/v1/auth`;
-            const requestAuthChallengeUrl = `${baseAuthUrl}/request-challenge/${this.walletAddress}`;
-            const hashcash = yield this.computeHashcash(4, 2);
-            const challengeResponse = yield axios_1.default.get(requestAuthChallengeUrl, { headers: { hashcash } });
-            const randomness = challengeResponse.data.randomness;
-            const signature = eth_crypto_1.default.sign(this.privateKey, randomness);
-            const faceAuthChallangeUrl = `${baseAuthUrl}/face-challenge`;
-            const challangeFaceResponse = yield axios_1.default.post(faceAuthChallangeUrl, { ethereumAddress: this.walletAddress }, {
-                headers: {
-                    signature,
-                },
-            });
-            this.authToken = challangeFaceResponse.data.authToken;
-        });
+        this.privKey = privKey;
+        if (!role) {
+            this.role = 'user';
+        }
+        else {
+            this.role = role;
+        }
+        this.publicKey = ethers_1.ethers.utils.computePublicKey(privKey).substring(2);
     }
     addToIpfs(data) {
         return __awaiter(this, void 0, void 0, function* () {
             yield this.refreshAuthToken();
             const hastoIpfsUploadUrl = `${this.hastoApiUrl}/api/v1/ipfs/add`;
+            console.log('dupa');
             let response;
             try {
                 response = yield axios_1.default.post(hastoIpfsUploadUrl, { rawData: data }, { headers: { authtoken: this.authToken } });
             }
             catch (err) {
+                console.log(err);
                 throw new Error(`Request to gateway failed details: ${JSON.stringify(err.response.data)}`);
             }
             const hastoIpfsResponse = response;
+            console.log(hastoIpfsResponse);
             const ipfsHash = hastoIpfsResponse.data.ipfsHash;
             const usedTransfer = hastoIpfsResponse.data.usedTransfer;
             return { ipfsHash, usedTransfer };
@@ -95,9 +88,36 @@ class HastoGatewaySdk {
             }
         });
     }
+    assignTransfer(whom, quantity) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.role !== 'admin') {
+                throw new Error('In order to call admin restricted methods please set sdk mode as admin role');
+            }
+            yield this.refreshAuthToken();
+            const url = `${this.hastoApiUrl}/api/v1/transfers/assign-transfer`;
+            const body = { whom, quantity };
+            try {
+                yield axios_1.default.post(url, body, { headers: { authtoken: this.authToken } });
+            }
+            catch (err) {
+                console.log(err);
+                throw new Error(`Request to gateway failed details: ${JSON.stringify(err.response.data)}`);
+            }
+        });
+    }
+    // TODO
+    removeTransfer() {
+        return __awaiter(this, void 0, void 0, function* () { });
+    }
     setIdentity(args) {
         return __awaiter(this, void 0, void 0, function* () {
             yield this.refreshAuthToken();
+            const hashcash = yield this.computeHashcash(4, 2);
+            const isIdentitySetUrl = `${this.hastoApiUrl}/api/v1/identity/identity-exists/${ethers_1.utils.computeAddress(this.privKey)}`;
+            const isIdentitySetResponse = yield axios_1.default.get(isIdentitySetUrl, { headers: { hashcash } });
+            if (isIdentitySetResponse.data.exists) {
+                return;
+            }
             if (!args.email && !args.phoneNumber) {
                 throw new Error('Invalid arguments at least one needs to be not null');
             }
@@ -120,16 +140,82 @@ class HastoGatewaySdk {
             }
         });
     }
+    authorizeAsUser() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const baseAuthUrl = `${this.hastoApiUrl}/api/v1/auth`;
+            const requestAuthChallengeUrl = `${baseAuthUrl}/request-challenge/user`;
+            const hashcash = yield this.computeHashcash(4, 2);
+            let challengeResponse;
+            try {
+                challengeResponse = yield axios_1.default.get(requestAuthChallengeUrl, {
+                    headers: { hashcash, publickey: this.publicKey },
+                });
+            }
+            catch (err) {
+                throw new Error(`Request to gateway failed details: ${JSON.stringify(err.response.data)}`);
+            }
+            const randomness = challengeResponse.data.randomness;
+            const signature = eth_crypto_1.default.sign(this.privKey, randomness);
+            const faceAuthChallangeUrl = `${baseAuthUrl}/face-challenge/user`;
+            let challangeFaceResponse;
+            try {
+                challangeFaceResponse = yield axios_1.default.post(faceAuthChallangeUrl, { publicKey: this.publicKey }, {
+                    headers: {
+                        signature,
+                    },
+                });
+            }
+            catch (err) {
+                throw new Error(`Request to gateway failed details: ${JSON.stringify(err.response.data)}`);
+            }
+            this.authToken = challangeFaceResponse.data.authToken;
+        });
+    }
+    authorizeAsAdmin() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const baseAuthUrl = `${this.hastoApiUrl}/api/v1/auth`;
+            const requestAuthChallengeUrl = `${baseAuthUrl}/request-challenge/admin`;
+            const hashcash = yield this.computeHashcash(4, 2);
+            let challengeResponse;
+            try {
+                challengeResponse = yield axios_1.default.get(requestAuthChallengeUrl, {
+                    headers: { hashcash, publickey: this.publicKey },
+                });
+            }
+            catch (err) {
+                throw new Error(`Request to gateway failed details: ${JSON.stringify(err.response.data)}`);
+            }
+            const randomness = challengeResponse.data.randomness;
+            const signature = eth_crypto_1.default.sign(this.privKey, randomness);
+            const faceAuthChallangeUrl = `${baseAuthUrl}/face-challenge/admin`;
+            const challangeFaceResponse = yield axios_1.default.post(faceAuthChallangeUrl, { publicKey: this.publicKey }, {
+                headers: {
+                    signature,
+                },
+            });
+            this.authToken = challangeFaceResponse.data.authToken;
+        });
+    }
     refreshAuthToken() {
         return __awaiter(this, void 0, void 0, function* () {
             if (!this.authToken) {
-                yield this.setHastoApiAuthToken();
+                if (this.role === 'user') {
+                    yield this.authorizeAsUser();
+                }
+                else {
+                    yield this.authorizeAsAdmin();
+                }
             }
             const rawToken = jwt.decode(this.authToken);
             const expires = rawToken.exp;
             if (Date.now() / 1000 >= expires) {
                 try {
-                    yield this.setHastoApiAuthToken();
+                    if (this.role === 'user') {
+                        yield this.authorizeAsUser();
+                    }
+                    else {
+                        this.authorizeAsAdmin();
+                    }
                 }
                 catch (err) {
                     throw err;
