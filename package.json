@@ -14,7 +14,7 @@
     "ethers": "^4.0.40",
     "ipfs-http-client": "^40.0.1",
     "jsonwebtoken": "^8.5.1",
-    "simple-crypto-js": "^2.2.0"
+    "simple-crypto-js": "^2.3.0"
   },
   "scripts": {
     "build": "tsc",
